@@ -1,10 +1,42 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
+  const [show, setShow] = useState(false);
+  const navigate = useNavigate();
   return (
-    <div className="w-full h-[100vh] flex items-center justify-center bg-slate-200">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h1 className="text-2xl font-bold mb-4">Login</h1>
+    <div className='w-full h-[100vh] bg-slate-200 flex items-center justify-center'>
+      <div className='w-full max-w-[500px] h-[500px] bg-white rounded-lg shadow-gray-400 shadow-lg flex flex-col gap-[30px]'>
+        <div className='w-full h-[150px] bg-[#20c7ff] rounded-b-[30px] shadow-gray-400 shadow-lg flex items-center justify-center'>
+          <h1 className='text-gray-600 font-bold text-[30px]'>
+            Welcome Back <span className='text-white'>Alpha Coders</span>
+          </h1>
+        </div>
+        <form className='w-full flex flex-col gap-[20px] px-8 mt-4'>
+          <input type="text" placeholder='Username or GitHub' className='p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition'/>
+          <div className='relative flex items-center'>
+            <input 
+              type={show ? "text" : "password"} 
+              placeholder='Password' 
+              className='w-full p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition pr-16'
+            />
+            <button 
+              type="button" 
+              className='absolute right-3 text-[#20c7ff] font-semibold text-sm hover:underline focus:outline-none' 
+              onClick={() => setShow(s => !s)}
+            >
+              {show ? "Hide" : "Show"}
+            </button>
+          </div>
+          <button type="submit" className='mt-2 bg-[#20c7ff] text-white font-bold py-3 rounded-lg shadow-md hover:bg-[#1aa6d9] transition'>Login</button>
+        </form>
+        <div className='w-full flex justify-center items-center pb-4'>
+          <span className='text-gray-500'>Don't have an account?</span>
+          <button onClick={() => navigate("/signup")}
+            className='ml-2 text-[#20c7ff] font-semibold hover:underline focus:outline-none bg-transparent border-none p-0 cursor-pointer'>
+            Sign Up
+          </button>
+        </div>
       </div>
     </div>
   )
