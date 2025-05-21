@@ -1,9 +1,36 @@
 import React, { use, useState } from 'react'
+import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
+import { serverUrl } from '../main';
 
 function SignUp() {
       let navigate = useNavigate();
       let [show,setShow] = useState(false)
+      let [userName,setUserName]= useState("")
+      let [github,setGithub]= useState("")
+      let [password,setPassword]= useState("")
+      let [loading,setLoading]= useState(false)
+
+      const handleSignup = async (e) => {
+        e.preventDefault()
+        setLoading(true)
+        try {
+          let result = await axios.post(`${serverUrl}/api/auth/signup`, {
+            userName,
+            github,
+            password
+          }, { withCredentials: true })
+          console.log(result)
+          setUserName("")
+          setGithub("")
+          setPassword("")
+          setLoading(false)
+        } catch (error) {
+          console.log(error)
+          setLoading(false)
+        }
+      }
+
   return (
   <div className='w-full h-[100vh] bg-slate-200 flex items-center justify-center'>
     <div className='w-full max-w-[500px] h-[600px] bg-white rounded-lg shadow-gray-400 shadow-lg flex flex-col gap-[30px]'>
@@ -12,14 +39,16 @@ function SignUp() {
       Welcome <span className='text-white'>Alpha Coders</span>
     </h1>
   </div>
-  <form className='w-full flex flex-col gap-[20px] px-8 mt-4'>
-    <input type="text" placeholder='Username' className='p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition'/>
-    <input type="text" placeholder='GitHub' className='p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition'/>
+  <form className='w-full flex flex-col gap-[20px] px-8 mt-4' onSubmit={handleSignup}>
+    <input type="text" placeholder='Username' className='p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition'onChange={(e)=>setUserName(e.target.value)} value={userName}/>
+    <input type="text" placeholder='GitHub' className='p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition'onChange={(e)=>setGithub(e.target.value)} value={github}/>
     <div className='relative flex items-center'>
       <input 
         type={show ? "text" : "password"} 
         placeholder='Password' 
         className='w-full p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition pr-16'
+        onChange={(e) => setPassword(e.target.value)}
+        value={password}
       />
       <button 
         type="button" 
@@ -28,8 +57,13 @@ function SignUp() {
       >
         {show ? "Hide" : "Show"}
       </button>
-    </div>
-    <button type="submit" className='mt-2 bg-[#20c7ff] text-white font-bold py-3 rounded-lg shadow-md hover:bg-[#1aa6d9] transition'>Sign Up</button>
+    </div>    <button 
+      type="submit"
+      disabled={loading}
+      className='mt-2 bg-[#20c7ff] text-white font-bold py-3 rounded-lg shadow-md hover:bg-[#1aa6d9] transition disabled:opacity-70'
+    >
+      {loading ? "Loading..." : "Sign Up"}
+    </button>
   </form>
   <div className='w-full flex justify-center items-center pb-4'>
     <span className='text-gray-500'>Already have an account?</span>
