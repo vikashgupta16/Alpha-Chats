@@ -2,6 +2,9 @@ import React, { use, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 import { serverUrl } from '../main';
+import { setUserData } from '../redux/userSlice';
+import { useDispatch, useSelector } from 'react-redux';
+
 
 function SignUp() {
       let navigate = useNavigate();
@@ -10,21 +13,21 @@ function SignUp() {
       let [github,setGithub]= useState("")
       let [password,setPassword]= useState("")
       let [loading,setLoading]= useState(false)
+      let [error,setError]= useState("")
+      let dispatch = useDispatch()
 
       const handleSignup = async (e) => {
         e.preventDefault()
         setLoading(true)
         try {
           let result = await axios.post(`${serverUrl}/api/auth/signup`, {
-            userName,
-            github,
-            password
+            userName,github,password
           }, { withCredentials: true })
-          console.log(result)
-          setUserName("")
+          dispatch(setUserData(result.data))
           setGithub("")
           setPassword("")
           setLoading(false)
+          setError("")
         } catch (error) {
           console.log(error)
           setLoading(false)

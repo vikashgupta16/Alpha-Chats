@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { serverUrl } from '../main';
+import { useDispatch } from 'react-redux';
 
 function Login() {
   const [show, setShow] = useState(false);
@@ -11,6 +12,7 @@ function Login() {
   let [password,setPassword]= useState("")
   let [error, setError] = useState("");
   let [loading,setLoading]= useState(false)
+  let dispatch = useDispatch()
 
       const handleLogin = async (e) => {
         e.preventDefault()
