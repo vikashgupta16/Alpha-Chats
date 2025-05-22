@@ -2,7 +2,8 @@ import axios from 'axios';
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { serverUrl } from '../main';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUserData } from '../redux/userSlice';
 
 function Login() {
   const [show, setShow] = useState(false);
@@ -23,6 +24,7 @@ function Login() {
             github,
             password
           }, { withCredentials: true })
+          dispatch(setUserData(result.data))
           console.log(result)
             setGithub("")
             setPassword("")

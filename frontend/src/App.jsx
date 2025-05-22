@@ -9,7 +9,7 @@ import Profile from './pages/Profile'
 
 function App() {
   getCurrentUser()
-  let {userData}=useSelector((state)=>state.user)
+  let {userData}=useSelector(state=>state.user)
   return (
     <Routes>
       <Route path='/login' element={!userData?<Login />:<Navigate to="/"/>} />
