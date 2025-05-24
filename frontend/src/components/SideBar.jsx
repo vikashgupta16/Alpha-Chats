@@ -30,7 +30,7 @@ function SideBar() {
       <div className='w-[60px] h-[60px] rounded-full overflow-hidden bg-[#20c7ff] flex items-center justify-center shadow-gary-500 shadow-lg mt-[10px] fixed bottom-[20px] left-[10px]' onClick={handelLogoout}>
                 <BiLogOut className='w-[25px] h-[25px] cursor-pointer'/>
             </div>
-      <div className='w-full h-[300px] bg-[#20c7ff] rounded-b-[30px] shadow-gray-400 shadow-lg flex flex-col justify-center px-[20px]'>
+      <div className='w-full h-[300px] bg-[#20c7ff] rounded-b-[30%] shadow-gray-400 shadow-lg flex flex-col justify-center px-[20px]'>
         <h1 className='text-white font-bold text-[25px]'>Alpha Chats</h1>
         <div className='w-full flex justify-between items-center'>
             <h1 className='text-gray-800 font-bold text-[25px]'>α , {userData.name || "user"}</h1>
@@ -43,7 +43,7 @@ function SideBar() {
                 <MdOutlinePersonSearch className='w-[25px] h-[25px] cursor-pointer'/>
             </div>}
         {search && 
-            <form className='w-full h-[60px] bg-white flex items-center gap-[10px] shadow-gary-500 shadow-lg mt-[10px] rounded-full overflow-hidden px-[20px]' >
+            <form className='w-full h-[60px] bg-white flex items-center gap-[10px] shadow-gray-500 shadow-lg mt-[10px] rounded-full overflow-hidden px-[20px]' >
                 <MdOutlinePersonSearch className='w-[25px] h-[25px]'/>
                 <input type="text" placeholder='search coders...' className='w-full h-full text-[17px] outline-0 border-0'/>
                 <GiCrossMark className='w-[25px] h-[25px] cursor-pointer' onClick={()=>setSearch(false)}/>
@@ -56,6 +56,16 @@ function SideBar() {
             ))}
             
         </div>
+      </div>
+      <div className='w-full h-[60vh] overflow-auto flex flex-col gap-[20px] items-center mt-[20px]'>
+        {otherUsers?.map((user)=>(
+          <div className='w-[95%] h-[60px] flex  items-center gap-[20px] bg-white shadow-gray-500 shadow-lg rounded-full hover:bg-[#d4d6ea] cursor-pointer'>
+              <div className='w-[60px]  h-[60px] rounded-full overflow-hidden flex items-center justify-center shadow-gary-500 shadow-lg'>
+                <img src={user.image || dp} alt="Profile" className='h-[100%] w-[100%] object-cover' />
+            </div>
+            <h1 className='text-gray-800 font-semibold text-[20px]'>{user.name || user.userName}</h1>
+            </div>
+            ))}
       </div>
     </div>
   )
