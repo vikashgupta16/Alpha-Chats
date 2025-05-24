@@ -25,6 +25,7 @@ function Login() {
             password
           }, { withCredentials: true })
           dispatch(setUserData(result.data))
+          navigate("/")
           console.log(result)
             setGithub("")
             setPassword("")

@@ -17,7 +17,7 @@ const getCurrentUser=() =>{
             }
         }
         fetchUser()
-    },[userData])
+    },[])
 }
 
 

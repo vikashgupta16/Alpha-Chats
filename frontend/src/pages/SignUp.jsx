@@ -24,6 +24,7 @@ function SignUp() {
             userName,github,password
           }, { withCredentials: true })
           dispatch(setUserData(result.data))
+          navigate("/profile")
           setGithub("")
           setPassword("")
           setLoading(false)
