@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 function SideBar() {
-    let {userData,otherUsers} = useSelector(state => state.user)
+    let {userData,otherUsers,selectedUser} = useSelector(state => state.user)
     let [search, setSearch] = useState(false)
     let dispatch = useDispatch()
     let navigate = useNavigate()
@@ -26,7 +26,7 @@ function SideBar() {
       }
     }
   return (
-    <div className={`lg:w-[30%] lg:block ${!setSelectedUser?"block":"hidden"} w-full h-full bg-slate-200`}>
+    <div className={`lg:w-[30%] lg:block ${!selectedUser?"block":"hidden"} w-full h-full bg-slate-200`}>
       <div className='w-[60px] h-[60px] rounded-full overflow-hidden bg-[#20c7ff] flex items-center justify-center shadow-gary-500 shadow-lg mt-[10px] fixed bottom-[20px] left-[10px]' onClick={handelLogoout}>
                 <BiLogOut className='w-[25px] h-[25px] cursor-pointer'/>
             </div>
