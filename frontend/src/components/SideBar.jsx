@@ -6,7 +6,7 @@ import { GiCrossMark } from "react-icons/gi";
 import { BiLogOut } from "react-icons/bi";
 import axios from 'axios';
 import { serverUrl } from '../main';
-import { setOtherUsers, setUserData } from '../redux/userSlice';
+import { setSelectedUser, setOtherUsers, setUserData } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -26,7 +26,7 @@ function SideBar() {
       }
     }
   return (
-    <div className='lg:w-[30%] w-full h-full bg-slate-200'>
+    <div className={`lg:w-[30%] lg:block ${!setSelectedUser?"block":"hidden"} w-full h-full bg-slate-200`}>
       <div className='w-[60px] h-[60px] rounded-full overflow-hidden bg-[#20c7ff] flex items-center justify-center shadow-gary-500 shadow-lg mt-[10px] fixed bottom-[20px] left-[10px]' onClick={handelLogoout}>
                 <BiLogOut className='w-[25px] h-[25px] cursor-pointer'/>
             </div>
@@ -59,7 +59,7 @@ function SideBar() {
       </div>
       <div className='w-full h-[60vh] overflow-auto flex flex-col gap-[20px] items-center mt-[20px]'>
         {otherUsers?.map((user)=>(
-          <div className='w-[95%] h-[60px] flex  items-center gap-[20px] bg-white shadow-gray-500 shadow-lg rounded-full hover:bg-[#d4d6ea] cursor-pointer'>
+          <div className='w-[95%] h-[60px] flex  items-center gap-[20px] bg-white shadow-gray-500 shadow-lg rounded-full hover:bg-[#d4d6ea] cursor-pointer' onClick={()=>dispatch(setSelectedUser(user))}>
               <div className='w-[60px]  h-[60px] rounded-full overflow-hidden flex items-center justify-center shadow-gary-500 shadow-lg'>
                 <img src={user.image || dp} alt="Profile" className='h-[100%] w-[100%] object-cover' />
             </div>
