@@ -9,7 +9,7 @@ function MessageArea() {
   let {selectedUser} = useSelector(state => state.user)
   let dispatch = useDispatch()
   return (
-   <div className={`lg:w-[70%] w-full h-full bg-slate-200 border-l-2 border-gray-300 ${selectedUser ? "flex" : "hidden"} lg:flex`}>
+   <div className={`lg:w-[70%] w-full h-full bg-slate-200 border-l-2 relative border-gray-300 ${selectedUser ? "flex" : "hidden"} lg:flex`}>
       {selectedUser && 
       <div className='w-full h-[100px] bg-[#1b9fcb] rounded-b-[30px] shadow-gray-400 shadow-lg gap-[20px] flex items-center px-[20px]'>
           <div className='cursor-pointer' onClick={()=>dispatch(setSelectedUser(null))}> 
@@ -27,6 +27,11 @@ function MessageArea() {
         <span className='text-gray-700 font-semibold text-[30px]' >Elite Programmers!</span>
       </div>}
       
+      <div className='w-full lg:w-[70%] h-[100px] fixed bottom-[20px] flex items-center justify-center'>
+        <form className='w-[95%] max-[60%] h-[60px] bg-[#1797c2]  rounded-full shadow-gray-400 shadow-lg '>
+
+        </form>
+        </div>
     </div>
   )
 }
