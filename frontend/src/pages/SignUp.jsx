@@ -1,9 +1,9 @@
-import React, { use, useState } from 'react'
+import React, { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 import { serverUrl } from '../main';
 import { setUserData } from '../redux/userSlice';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 
 function SignUp() {
@@ -16,21 +16,52 @@ function SignUp() {
       let [error,setError]= useState("")
       let dispatch = useDispatch()
 
+      const validateForm = () => {
+        if (!userName.trim()) {
+          setError("Username is required")
+          return false
+        }
+        if (userName.trim().length < 3) {
+          setError("Username must be at least 3 characters")
+          return false
+        }
+        if (!github.trim()) {
+          setError("GitHub username is required")
+          return false
+        }
+        if (!password.trim()) {
+          setError("Password is required")
+          return false
+        }        if (password.length < 6) {
+          setError("Password must be at least 6 characters")
+          return false
+        }
+        return true
+      }
+
       const handleSignup = async (e) => {
         e.preventDefault()
+        
+        if (!validateForm()) {
+          return
+        }
+        
         setLoading(true)
         try {
           let result = await axios.post(`${serverUrl}/api/auth/signup`, {
-            userName,github,password
+            userName: userName.trim(),
+            github: github.trim(),
+            password
           }, { withCredentials: true })
           dispatch(setUserData(result.data))
           navigate("/profile")
+          setUserName("")
           setGithub("")
           setPassword("")
           setLoading(false)
-          setError("")
-        } catch (error) {
-          console.log(error)
+          setError("")} catch (error) {
+          console.error("Signup error:", error)
+          setError(error.response?.data?.message || "Signup failed. Please try again.")
           setLoading(false)
         }
       }
@@ -42,10 +73,10 @@ function SignUp() {
     <h1 className='text-gray-600 font-bold text-[30px]'>
       Welcome <span className='text-white'>Alpha Coders</span>
     </h1>
-  </div>
-  <form className='w-full flex flex-col gap-[20px] px-8 mt-4' onSubmit={handleSignup}>
+  </div>  <form className='w-full flex flex-col gap-[20px] px-8 mt-4' onSubmit={handleSignup}>
     <input type="text" placeholder='Username' className='p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition'onChange={(e)=>setUserName(e.target.value)} value={userName}/>
     <input type="text" placeholder='GitHub' className='p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#20c7ff] transition'onChange={(e)=>setGithub(e.target.value)} value={github}/>
+    {error && <p className="text-red-500 text-sm">{error}</p>}
     <div className='relative flex items-center'>
       <input 
         type={show ? "text" : "password"} 

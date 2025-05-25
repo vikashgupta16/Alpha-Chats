@@ -11,9 +11,8 @@ const getOtherUsers=() =>{
         const fetchUser=async()=>{
             try {
                 let result=await axios.get(`${serverUrl}/api/user/others`,{withCredentials:true})
-                dispatch(setOtherUsers(result.data))
-            } catch (error) {
-                console.log(error)
+                dispatch(setOtherUsers(result.data))            } catch (error) {
+                console.error("Error fetching other users:", error)
             }
         }
         fetchUser()
