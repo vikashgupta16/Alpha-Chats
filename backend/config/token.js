@@ -4,7 +4,8 @@ const genToken=async (userId)=>{
         const token=await jwt.sign({userId},process.env.JWT_SECRET,{expiresIn:"7d"})
         return token
     } catch (error) {
-        console.log("gen token error")
+        console.error("Token generation error:", error)
+        throw new Error("Failed to generate token")
     }
 }
 

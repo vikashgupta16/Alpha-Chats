@@ -5,7 +5,7 @@ import { getMessages, sendMessage } from "../controllers/message.controller.js"
 
 const messageRouter=express.Router()
 
-messageRouter.post("/send/:reciver",isAuth,upload.single("image"),sendMessage)
-messageRouter.post("/get/:reciver",isAuth,getMessages)
+messageRouter.post("/send/:receiver",isAuth,upload.single("image"),sendMessage)
+messageRouter.get("/get/:receiver",isAuth,getMessages)
 
 export default messageRouter

@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🖥️ Debug Backend",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/index.js",
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "envFile": "${workspaceFolder}/backend/.env",
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeExecutable": "node",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "🎨 Debug Frontend (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend/src",
+      "sourceMapPathOverrides": {
+        "webpack:///src/*": "${webRoot}/*"
+      }
+    },
+    {
+      "name": "🚀 Launch Full Stack",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/index.js",
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "envFile": "${workspaceFolder}/backend/.env",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Start Frontend Dev Server"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🔥 Debug Full Stack",
+      "configurations": [
+        "🖥️ Debug Backend",
+        "🎨 Debug Frontend (Chrome)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

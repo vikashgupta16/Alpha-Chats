@@ -6,7 +6,6 @@ const isAuth = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const verifToken = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(verifToken);
     req.userId = verifToken.userId
     next();
   } catch (error) {

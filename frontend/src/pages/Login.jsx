@@ -2,37 +2,54 @@ import axios from 'axios';
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { serverUrl } from '../main';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { setUserData } from '../redux/userSlice';
 
-function Login() {
-  const [show, setShow] = useState(false);
+function Login() {  const [show, setShow] = useState(false);
   let navigate = useNavigate();
-  //let [userName,setUserName]= useState("")
   let [github,setGithub]= useState("")
   let [password,setPassword]= useState("")
   let [error, setError] = useState("");
   let [loading,setLoading]= useState(false)
   let dispatch = useDispatch()
+  const validateForm = () => {
+    if (!github.trim()) {
+      setError("GitHub username is required")
+      return false
+    }
+    if (!password.trim()) {
+      setError("Password is required")
+      return false
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
+      return false
+    }
+    return true
+  }
 
-      const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
         e.preventDefault()
+        
+        if (!validateForm()) {
+          return
+        }
+        
         setLoading(true)
         try {
-          setError("");
-          let result = await axios.post(`${serverUrl}/api/auth/login`, {
-            github,
+          setError("");          let result = await axios.post(`${serverUrl}/api/auth/login`, {
+            github: github.trim(),
             password
           }, { withCredentials: true })
           dispatch(setUserData(result.data))
           navigate("/")
-          console.log(result)
-            setGithub("")
-            setPassword("")
-            setLoading(false)
+          setGithub("")
+          setPassword("")
+          setLoading(false)
         } catch (error) {
-          console.log(error)
-          setError(error.response?.data?.message || "Login failed. Please try again.");
+          console.error("Login error:", error)
+          setError(error.response?.data?.message || "Login failed. Please try again.")
+          setLoading(false)
         }
       }
   return (
