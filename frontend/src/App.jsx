@@ -7,8 +7,8 @@ import Home from './pages/Home'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import ErrorBoundary from './components/ErrorBoundary'
-import getCurrentUser from './Hooks/getCurrentUser'
-import getOtherUsers from './Hooks/getOtherUsers'
+import getCurrentUser from './Hooks/getCurrentUser.js'
+import getOtherUsers from './Hooks/getOtherUsers.js'
 
 function App() {
   getCurrentUser()
