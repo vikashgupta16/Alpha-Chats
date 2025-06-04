@@ -31,11 +31,6 @@
       "dest": "frontend/dist/$1"
     }
   ],
-  "functions": {
-    "backend/index.js": {
-      "maxDuration": 30
-    }
-  },
   "env": {
     "NODE_ENV": "production"
   }
