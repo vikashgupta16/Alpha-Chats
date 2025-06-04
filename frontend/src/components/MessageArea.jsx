@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedUser, setMessages, addMessage, markMessagesAsRead } from '../redux/userSlice';
 import axios from 'axios';
 import { serverUrl } from '../main';
-import useSocket from '../Hooks/useSocket.js';
+import useSocket from '../Hooks/useSocket';
 import LoadingSpinner from './LoadingSpinner';
 import { useTheme } from './ThemeContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
