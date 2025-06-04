@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html.light {
+  --tw-bg-opacity: 1;
+  background-color: #f3f4f6;
+}
+html.dark {
+  --tw-bg-opacity: 1;
+  background-color: #181c2f;
+}
+body {
+  min-height: 100vh;
+}

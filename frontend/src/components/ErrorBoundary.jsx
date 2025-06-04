@@ -20,30 +20,60 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className='w-full h-screen flex items-center justify-center bg-slate-200'>
-          <div className='bg-white p-8 rounded-lg shadow-lg max-w-md text-center'>
-            <h1 className='text-2xl font-bold text-red-600 mb-4'>Oops! Something went wrong</h1>
-            <p className='text-gray-600 mb-4'>
-              We're sorry, but something unexpected happened. Please refresh the page or try again later.
+      return (        <div className='w-full h-screen flex items-center justify-center bg-gradient-to-br from-[#181c2f] via-[#2d1e60] to-[#39ff14] relative'>
+          {/* Animated background grid */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="grid grid-cols-12 gap-4 h-full">
+              {Array.from({ length: 48 }, (_, i) => (
+                <div 
+                  key={i} 
+                  className="bg-[#39ff14] rounded-lg animate-pulse" 
+                  style={{ 
+                    animationDelay: `${i * 0.1}s`,
+                    animationDuration: `${2 + Math.random() * 3}s`
+                  }}
+                ></div>
+              ))}
+            </div>
+          </div>
+          
+          <div className='relative z-10 bg-[#23234a] p-8 rounded-2xl shadow-2xl max-w-md text-center border border-[#39ff14]/30'>
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <h1 className='text-2xl font-bold text-red-400 mb-2 font-mono'>System Error</h1>
+              <div className="text-xs text-[#39ff14] font-mono mb-4">ERROR_CODE: 0x001</div>
+            </div>
+            
+            <p className='text-[#b3b3ff] mb-6 font-mono text-sm'>
+              A critical error has occurred in the system. Please restart the application or contact support.
             </p>
+            
             <button 
               onClick={() => window.location.reload()}
-              className='bg-[#20c7ff] text-white px-6 py-2 rounded-lg hover:bg-[#1aa6d9] transition'
+              className='bg-gradient-to-r from-[#39ff14] to-[#7f53ac] text-[#181c2f] px-6 py-3 rounded-lg hover:scale-105 transition-all font-mono font-bold shadow-lg'
             >
-              Refresh Page
+              RESTART SYSTEM
             </button>
+            
             {process.env.NODE_ENV === 'development' && (
-              <details className='mt-4 text-left'>
-                <summary className='cursor-pointer text-sm text-gray-500'>Error details (dev only)</summary>
-                <pre className='text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto'>
+              <details className='mt-6 text-left'>
+                <summary className='cursor-pointer text-sm text-[#39ff14] font-mono hover:text-white'>
+                  &gt; Show Error Details
+                </summary>
+                <pre className='text-xs mt-3 p-3 bg-[#181c2f] rounded border border-[#39ff14]/20 overflow-auto text-[#b3b3ff] font-mono'>
                   {this.state.error && this.state.error.toString()}
                   <br />
-                  {this.state.errorInfo.componentStack}
+                  {this.state.errorInfo && this.state.errorInfo.componentStack}
                 </pre>
               </details>
             )}
           </div>
+          
+          {/* Ambient glow effects */}
+          <div className="fixed top-10 left-10 w-32 h-32 bg-red-500/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="fixed bottom-10 right-10 w-40 h-40 bg-[#39ff14]/20 rounded-full blur-3xl animate-pulse"></div>
         </div>
       )
     }

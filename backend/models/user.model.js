@@ -17,10 +17,22 @@ const userSchema=new mongoose.Schema({
     password:{
         type:String,
         required:true
-    },
-    image:{
+    },    image:{
         type:String,
         default:""
+    },
+    status: {
+        type: String,
+        enum: ['online', 'offline', 'away', 'busy'],
+        default: 'offline'
+    },
+    lastSeen: {
+        type: Date,
+        default: Date.now
+    },
+    isOnline: {
+        type: Boolean,
+        default: false
     }
 },{timestamps:true})
 

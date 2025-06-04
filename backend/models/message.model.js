@@ -5,20 +5,40 @@ const messageSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
-    receiver:{
+    reciver:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
-    },
-    message:{
+    },    message:{
         type: String,
         default:""
     },
     image:{
         type: String,
         default: ""
+    },
+    files:[{
+        name: String,
+        url: String,
+        size: Number,
+        type: String
+    }],    messageType:{
+        type: String,
+        enum: ['text', 'image', 'file', 'code', 'terminal'],
+        default: 'text'
+    },
+    metadata: {
+        type: Object,
+        default: {}
+    },
+    read: {
+        type: Boolean,
+        default: false
+    },
+    delivered: {
+        type: Boolean,
+        default: false
     }
-
 
 },{timestamps: true});
 
