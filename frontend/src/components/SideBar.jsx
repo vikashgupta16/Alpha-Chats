@@ -10,7 +10,7 @@ import { serverUrl } from '../main';
 import { setSelectedUser, setOtherUsers, setUserData } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './ThemeContext';
-import useSocket from '../Hooks/useSocket.js';
+import useSocket from '../Hooks/useSocket';
 
 function SideBar() {
     let {userData,otherUsers,selectedUser,messages} = useSelector(state => state.user)
