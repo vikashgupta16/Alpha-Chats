@@ -104,7 +104,7 @@ function Login() {  const [show, setShow] = useState(false);
             </div>            <form className='w-full flex flex-col gap-[20px] px-8 mt-4' onSubmit={handleLogin}>
               <input 
                 type="text" 
-                placeholder='Username or GitHub' 
+                placeholder='GitHub id' 
                 className='p-3 rounded-lg bg-[#181c2f]/70 border border-[#39ff14]/30 text-white placeholder-[#b3b3ff] focus:outline-none focus:ring-2 focus:ring-[#39ff14] focus:border-[#39ff14] transition font-mono' 
                 onChange={(e)=>setGithub(e.target.value)}
                 value={github}
