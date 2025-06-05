@@ -21,17 +21,9 @@ const server = http.createServer(app)
 const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? [
-          "https://*.vercel.app",
-          "https://alpha-chats.vercel.app/",
-          "https://*.netlify.app",
-          "https://*.up.railway.app",
-          process.env.FRONTEND_URL,
-          /vercel\.app$/,
-          /netlify\.app$/,
-          /railway\.app$/
-        ] 
-      : ["http://localhost:5173", "https://alpha-chats.vercel.app/", "http://localhost:5174", "http://localhost:5175"],
+      ? "https://alpha-chats.vercel.app" // Single exact string for production
+      : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "https://congenial-trout-wr97rgrgx7xg29xq4-4000.app.github.dev/","http://localhost:5176","https://congenial-trout-wr97rgrgx7xg29xq4-5173.app.github.dev",
+    "https://congenial-trout-wr97rgrgx7xg29xq4-5173.app.github.dev/"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -361,15 +353,7 @@ io.on('connection', (socket) => {
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [
-        "https://*.vercel.app", 
-        "https://*.netlify.app",
-        "https://*.up.railway.app",
-        process.env.FRONTEND_URL,
-        /vercel\.app$/,
-        /netlify\.app$/,
-        /railway\.app$/
-      ] 
+    ? "https://alpha-chats.vercel.app" // Single exact string for production
     : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
   credentials: true
 }))
