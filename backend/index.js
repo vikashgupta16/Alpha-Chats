@@ -22,7 +22,8 @@ const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
       ? [
-          "https://*.vercel.app", 
+          "https://*.vercel.app",
+          "https://alpha-chats.vercel.app/",
           "https://*.netlify.app",
           "https://*.up.railway.app",
           process.env.FRONTEND_URL,
