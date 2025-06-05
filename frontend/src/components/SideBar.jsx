@@ -106,7 +106,7 @@ function SideBar() {
                 </div>
             </div>
             {/* Stats */}
-            <div className="flex gap-4 text-center px-6 py-3 bg-[#23234a] rounded-xl mx-4 -mt-6 z-10 relative shadow-md">
+            <div className="flex gap-4 text-center px-6 py-3 bg-[#23234a] rounded-xl mx-4 mt-2 z-10 relative shadow-md">
                 <div className="flex-1">
                     <div className="text-white font-bold text-lg flex items-center justify-center gap-1">
                         {onlineCount}
