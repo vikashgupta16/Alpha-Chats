@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import {Provider} from 'react-redux'
 import { store } from './redux/store.js'
 import { ThemeProvider } from './components/ThemeContext';
+import './config/axios.js'; 
 
 export const serverUrl = import.meta.env.VITE_API_URL || 
   (import.meta.env.PROD ? window.location.origin : "http://localhost:4000")
