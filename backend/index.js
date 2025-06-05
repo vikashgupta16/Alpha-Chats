@@ -30,8 +30,7 @@ const io = new Server(server, {
           /netlify\.app$/,
           /railway\.app$/
         ] 
-      : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "https://congenial-trout-wr97rgrgx7xg29xq4-4000.app.github.dev/","http://localhost:5176","https://congenial-trout-wr97rgrgx7xg29xq4-5173.app.github.dev",
-    "https://congenial-trout-wr97rgrgx7xg29xq4-5173.app.github.dev/"],
+      : ["http://localhost:5173", "https://alpha-chats.vercel.app/", "http://localhost:5174", "http://localhost:5175"],
     methods: ["GET", "POST"],
     credentials: true
   }
