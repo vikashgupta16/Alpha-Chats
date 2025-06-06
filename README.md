@@ -282,8 +282,8 @@ This project is licensed under the **ISC License** - see the [LICENSE](LICENSE) 
 ## 👨‍💻 Author
 
 **Vikash (Team Lead)**
-- GitHub: [@your-github](https://github.com/your-github)
-- Email: your-email@example.com
+- GitHub: [@vikashgup16](https://github.com/vikashgupta16)
+- Email: vikash9c35@gmail.com
 
 ## 🙏 Acknowledgments
 
