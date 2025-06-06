@@ -252,14 +252,15 @@ npm run build
 
 ## 🎨 Screenshots
 
-### Chat Interface
-![Chat Interface] (gitHubAssests/HomeMac.png)
+### Chat Interface  
+![Chat Interface](gitHubAssests/HomeMac.png)
 
-### Code Sharing
-![Code Sharing] (gitHubAssests/Chat.png)
+### Code Sharing  
+![Code Sharing](gitHubAssests/Chat.png)
 
-### Mobile Responsive
-![Mobile View](gitHubAssests/Mobile.png)
+### Mobile Responsive  
+<img src="gitHubAssests/Mobile.png" alt="Mobile View" width="300" height="500" />
+
 
 ## 🤝 Contributing
 
