@@ -259,7 +259,12 @@ npm run build
 ![Code Sharing](gitHubAssests/Chat.png)
 
 ### Mobile Responsive  
-<img src="gitHubAssests/Mobile.png" alt="Mobile View" width="300" height="500" />
+<p>
+  <img src="gitHubAssests/Mobile.png" alt="Mobile View" width="300" height="500" style="display: inline-block; margin-right: 10px;" />
+  <img src="gitHubAssests/Nothing.png" alt="Nothing View" width="450" height="550" style="display: inline-block; margin-top: 150px;" />
+</p>
+
+
 
 
 ## 🤝 Contributing
