@@ -261,7 +261,7 @@ npm run build
 ### Mobile Responsive  
 <p>
   <img src="gitHubAssests/Mobile.png" alt="Mobile View" width="300" height="500" style="display: inline-block; margin-right: 10px;" />
-  <img src="gitHubAssests/Nothing.png" alt="Nothing View" width="450" height="550" style="display: inline-block; margin-top: 150px;" />
+  <img src="gitHubAssests/Nothing.png" alt="Nothing View" style="display: inline-block;" />
 </p>
 
 
@@ -302,7 +302,6 @@ This project is licensed under the **ISC License** - see the [LICENSE](LICENSE) 
 ## 📈 Roadmap
 
 - [ ] **End-to-end encryption**
-- [ ] **Voice/Video calling**
 - [ ] **Channel/Group chats**
 - [ ] **Message reactions**
 - [ ] **File sharing improvements**
