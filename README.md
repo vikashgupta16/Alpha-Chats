@@ -253,13 +253,13 @@ npm run build
 ## 🎨 Screenshots
 
 ### Chat Interface
-![Chat Interface](https://via.placeholder.com/800x400?text=Terminal+Style+Chat+Interface)
+![Chat Interface] (gitHubAssests/HomeMac.png)
 
 ### Code Sharing
-![Code Sharing](https://via.placeholder.com/800x400?text=Syntax+Highlighted+Code+Sharing)
+![Code Sharing] (gitHubAssests/Chat.png)
 
 ### Mobile Responsive
-![Mobile View](https://via.placeholder.com/400x600?text=Mobile+Responsive+Design)
+![Mobile View](gitHubAssests/Mobile.png)
 
 ## 🤝 Contributing
 
