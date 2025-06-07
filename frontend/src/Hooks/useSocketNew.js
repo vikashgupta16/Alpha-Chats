@@ -24,7 +24,7 @@ const useSocket = (onMessageReceived) => {
     }
   }, [onMessageReceived])
 
-  // Initialize socket when user logs in - CRITICAL: Only depends on userId
+  // Initialize socket when user logs in
   useEffect(() => {
     if (userData?._id) {
       console.log('🎯 Initializing global socket for user:', userData._id)
@@ -79,43 +79,11 @@ const useSocket = (onMessageReceived) => {
     }
   }, [userData?._id])
 
-  // Additional functions that were in the original useSocket
-  const updateStatus = useCallback((status) => {
-    if (socketManager.socket && socketManager.isConnected) {
-      socketManager.socket.emit('updateStatus', {
-        userId: userData?._id,
-        status
-      })
-    }
-  }, [userData?._id])
-
-  const joinRoom = useCallback((roomId) => {
-    if (socketManager.socket && socketManager.isConnected) {
-      socketManager.socket.emit('joinRoom', roomId)
-    }
-  }, [])
-
-  const leaveRoom = useCallback((roomId) => {
-    if (socketManager.socket && socketManager.isConnected) {
-      socketManager.socket.emit('leaveRoom', roomId)
-    }
-  }, [])
-
-  const getUserActivity = useCallback((userId) => {
-    if (socketManager.socket && socketManager.isConnected) {
-      socketManager.socket.emit('getUserActivity', userId)
-    }
-  }, [])
-
   return {
     sendMessage,
     startTyping,
     stopTyping,
-    updateStatus,
     markAsRead,
-    joinRoom,
-    leaveRoom,
-    getUserActivity,
     isConnected: socketStatus.isConnected,
     onlineUsers: socketStatus.onlineUsers,
     typingUsers: socketStatus.typingUsers

@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react'
 import dp from '../assets/pp.webp'
 import { IoCameraOutline } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
-import { IoArrowBack } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { serverUrl } from '../config/constants';
@@ -14,32 +13,65 @@ function Profile() {
   const { theme } = useTheme();
   let {userData} = useSelector(state => state.user)
   let dispatch = useDispatch()
-  let navigate = useNavigate()
+  let navigate = useNavigate();
   let [name, setName] = useState(userData?.name || "")
   let [frontendImage, setFrontendImage] = useState(userData?.image || dp)
   let [backendImage, setBackendImage] = useState(null)
-  let image = useRef()
-  let [saving, setSaving] = useState(false)
-  const handleImage = (e) => {
+  let image = useRef();
+  let [saving, setSaving] = useState(false);
+  
+  // Debug: Log the userData.image to see what we're getting
+  console.log('👤 Profile - userData.image:', userData?.image)
+  console.log('🖼️ Profile - frontendImage:', frontendImage)
+    const handleImage = (e) => {
     let file = e.target.files[0]
     setFrontendImage(URL.createObjectURL(file))
     setBackendImage(file)
   }
-
+  
   const handleProfile = async (e) => {
     e.preventDefault()
-        setSaving(true)
+    setSaving(true)
 
     try {
       let formData = new FormData()
       formData.append("name", name)
       if (backendImage) {
         formData.append("image", backendImage)
+        console.log('📁 FormData created with image:', {
+          fileName: backendImage.name,
+          fileSize: backendImage.size,
+          fileType: backendImage.type
+        })
       }
+      
+      console.log('📤 Sending FormData to server...')
+      
       let result = await axios.put(`${serverUrl}/api/user/profile`, formData, {withCredentials:true})
-          setSaving(false)
+      setSaving(false)
+      
+      // Debug: Log the server response
+      console.log('🔍 Server response:', result.data)
+      console.log('🖼️ Server returned image:', result.data.image)
+      
       dispatch(setUserData(result.data))
-      navigate("/")
+      
+      // Update the frontend image with the new image from server
+      if (result.data.image) {
+        setFrontendImage(result.data.image)
+        console.log('✅ Updated frontendImage to:', result.data.image)
+      } else {
+        console.log('❌ No image in server response')
+      }      // Clear the backend image since it's now saved
+      setBackendImage(null)
+      
+      // Show success message in button and redirect after a brief delay
+      setSaving("success")
+      
+      setTimeout(() => {
+        navigate("/")
+      }, 1500) // 1.5 second delay to show success message
+      
     } catch (error) {
       setSaving(false)
       alert("Error updating profile")
@@ -76,8 +108,7 @@ function Profile() {
             <div className="flex-1 text-center">
               <span className="text-pastel-purple dark:text-[#b3b3ff] font-mono text-sm">alpha-chat@terminal ~ profile --edit</span>
             </div>
-          </div>
-          {/* Content area */}
+          </div>          {/* Content area */}
           <div className='p-8'>
             {/* Header */}
             <div className='text-center mb-8'>
@@ -116,12 +147,11 @@ function Profile() {
                   type="text"                  readOnly 
                   className='w-[90%] outline-none border-2 border-pastel-border dark:border-[#39ff14]/50 px-[20px] py-[10px] bg-pastel-peach dark:bg-[#181c2f] rounded-lg shadow-lg text-pastel-purple dark:text-[#b3b3ff] text-[19px] font-mono cursor-not-allowed' 
                   value={userData?.github || ""}
-                />
-                <button 
+                />                <button 
                   className='px-[20px] py-[10px] bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#ffe156] text-white dark:text-[#181c2f] rounded-2xl shadow-lg text-[20px] w-[200px] mt-[20px] font-semibold font-mono hover:shadow-xl hover:from-pastel-coral hover:to-pastel-sunny dark:hover:from-[#ffe156] dark:hover:to-[#39ff14] transition-all disabled:opacity-70 transform hover:scale-105' 
                   disabled={saving}
                 >
-                  {saving ? "Saving..." : "Save Profile"}
+                  {saving === true ? "Saving..." : saving === "success" ? "Saved! ✨ Exiting..." : "Save & Exit"}
                 </button>
               </form>
             </div>
