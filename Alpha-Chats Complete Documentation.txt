@@ -1,0 +1,372 @@
+# Alpha-Chats: Complete Documentation
+=====================================
+
+This file contains comprehensive documentation for Alpha-Chats, including detailed setup instructions, API documentation, deployment guides, and architectural details.
+
+TABLE OF CONTENTS
+================
+1. Architecture Details
+2. Complete Setup Guide
+3. API Documentation
+4. Socket.IO Events
+5. Deployment Options
+6. Security Features
+7. Performance Optimizations
+8. Testing Guide
+9. Contributing Guidelines
+10. Recent Updates & Bug Fixes
+
+=====================================
+1. ARCHITECTURE DETAILS
+=====================================
+
+Frontend Architecture:
+---------------------
+src/
+├── components/           # Reusable UI components
+│   ├── MessageArea.jsx        # Main chat interface
+│   ├── SideBar.jsx           # User list and navigation
+│   ├── ThemeContext.jsx      # Theme management
+│   └── LoadingSpinner.jsx    # Loading states
+├── pages/               # Route-based components
+│   ├── Home.jsx             # Main chat page
+│   ├── Login.jsx            # Authentication
+│   ├── Profile.jsx          # User profile management
+│   └── SignUp.jsx           # User registration
+├── Hooks/               # Custom React hooks
+│   ├── socketManager.js     # Global socket management
+│   ├── useSocket.js         # Socket.IO integration
+│   └── getCurrentUser.js    # User authentication
+├── redux/               # State management
+│   ├── store.js            # Redux store configuration
+│   └── userSlice.js        # User state management
+└── config/              # Configuration files
+    ├── axios.js            # HTTP client setup
+    └── constants.js        # App constants
+
+Backend Architecture:
+--------------------
+backend/
+├── controllers/         # Business logic
+│   ├── auth.controllers.js   # Authentication logic
+│   ├── user.controller.js    # User management
+│   └── message.controller.js # Message handling
+├── models/              # Database schemas
+│   ├── user.model.js         # User data structure
+│   ├── message.model.js      # Message data structure
+│   └── conversation.model.js # Chat conversations
+├── routes/              # API endpoints
+│   ├── auth.routes.js        # Authentication routes
+│   ├── user.routes.js        # User management routes
+│   └── message.routes.js     # Message routes
+├── middlewares/         # Custom middleware
+│   ├── isAuth.js            # JWT authentication
+│   └── multer.js            # File upload handling
+└── config/              # Configuration
+    ├── db.js               # Database connection
+    ├── token.js            # JWT utilities
+    └── cloudinary.js       # File upload config
+
+=====================================
+2. COMPLETE SETUP GUIDE
+=====================================
+
+Prerequisites:
+- Node.js 18+ installed
+- MongoDB database (local or MongoDB Atlas)
+- Cloudinary account for file uploads
+
+Step 1: Clone & Install
+-----------------------
+git clone https://github.com/your-username/alpha-chats.git
+cd alpha-chats
+
+# Install all dependencies (root, frontend, backend)
+npm run install:all
+
+Step 2: Environment Setup
+-------------------------
+Backend Environment (backend/.env):
+MONGO_URL=mongodb://localhost:27017/alpha-chats
+JWT_SECRET=your-super-secret-jwt-key
+CLOUDINARY_CLOUD_NAME=your-cloudinary-name
+CLOUDINARY_API_KEY=your-cloudinary-key
+CLOUDINARY_API_SECRET=your-cloudinary-secret
+NODE_ENV=development
+PORT=4000
+
+Frontend Environment (frontend/.env):
+VITE_API_URL=http://localhost:4000
+VITE_SOCKET_URL=http://localhost:4000
+
+Step 3: Database Setup
+----------------------
+# If using local MongoDB
+mongod
+
+# Or use MongoDB Atlas cloud database
+# Update MONGO_URL in backend/.env with your Atlas connection string
+
+Step 4: Run Development Servers
+-------------------------------
+# Start both frontend and backend simultaneously
+npm run dev
+
+# Or start individually:
+npm run dev:backend    # Backend on http://localhost:4000
+npm run dev:frontend   # Frontend on http://localhost:5173
+
+Step 5: Access the Application
+------------------------------
+Frontend: http://localhost:5173
+Backend API: http://localhost:4000
+Socket.IO: ws://localhost:4000
+
+=====================================
+3. API DOCUMENTATION
+=====================================
+
+Authentication Endpoints:
+
+Register User:
+POST /api/auth/signup
+Content-Type: application/json
+{
+  "userName": "johndoe",
+  "github": "johndoe_dev", 
+  "password": "securePassword123"
+}
+
+Login User:
+POST /api/auth/login
+Content-Type: application/json
+{
+  "github": "johndoe_dev",
+  "password": "securePassword123"
+}
+
+User Management:
+
+Get Current User:
+GET /api/user/current
+Authorization: Bearer <jwt_token>
+
+Update Profile:
+PUT /api/user/profile
+Content-Type: application/json
+Authorization: Bearer <jwt_token>
+{
+  "userName": "newUsername",
+  "github": "newHandle"
+}
+
+Message Endpoints:
+
+Send Message:
+POST /api/message/send/:recipientId
+Content-Type: application/json
+Authorization: Bearer <jwt_token>
+{
+  "message": "Hello, how are you?",
+  "messageType": "text"
+}
+
+Get Conversation:
+GET /api/message/get/:recipientId?page=1&limit=50
+Authorization: Bearer <jwt_token>
+
+=====================================
+4. SOCKET.IO EVENTS
+=====================================
+
+Client → Server Events:
+// Join user room
+socket.emit('join', userId)
+
+// Send message
+socket.emit('sendMessage', {
+  recipientId: 'user123',
+  message: 'Hello!',
+  messageType: 'text',
+  sender: 'currentUserId'
+})
+
+// Typing indicators
+socket.emit('typing', {
+  recipientId: 'user123', 
+  isTyping: true
+})
+
+Server → Client Events:
+// Receive message
+socket.on('receiveMessage', (messageData) => {
+  // Handle new message
+})
+
+// Online users update
+socket.on('onlineUsers', (usersList) => {
+  // Update online users list
+})
+
+// Typing status
+socket.on('userTyping', (typingData) => {
+  // Show typing indicator
+})
+
+=====================================
+5. DEPLOYMENT OPTIONS
+=====================================
+
+⚠️ IMPORTANT: Socket.IO Compatibility
+Alpha-Chats uses Socket.IO for real-time features, which requires persistent connections. 
+Vercel's serverless architecture doesn't support WebSocket connections.
+
+🥇 RECOMMENDED: Railway + Vercel
+Best solution for full functionality
+
+Backend Deployment (Railway):
+1. Sign up at railway.app
+2. Connect your GitHub repository
+3. Set environment variables:
+   MONGO_URL=mongodb+srv://your-atlas-connection
+   JWT_SECRET=your-production-secret
+   CLOUDINARY_CLOUD_NAME=your-cloudinary-name
+   CLOUDINARY_API_KEY=your-cloudinary-key
+   CLOUDINARY_API_SECRET=your-cloudinary-secret
+   NODE_ENV=production
+4. Deploy automatically from GitHub
+
+Frontend Deployment (Vercel):
+cd frontend
+echo "VITE_API_URL=https://your-app.railway.app" > .env
+echo "VITE_SOCKET_URL=https://your-app.railway.app" >> .env
+npx vercel --prod
+
+🥈 ALTERNATIVE: Render + Vercel
+Similar setup with Render for backend hosting.
+
+🥉 LIMITED: Vercel Only (No Real-time)
+Deploy both to Vercel but lose Socket.IO functionality.
+
+=====================================
+6. SECURITY FEATURES
+=====================================
+
+Authentication & Authorization:
+- JWT Tokens - Secure, stateless authentication
+- HTTP-Only Cookies - Secure token storage
+- Password Hashing - bcrypt with salt rounds
+- Session Management - Automatic token refresh
+
+Data Protection:
+- Input Validation - Server-side validation for all inputs
+- XSS Protection - Content sanitization
+- CORS Configuration - Controlled cross-origin requests
+- Rate Limiting - Protection against spam and abuse
+
+File Upload Security:
+- File Type Validation - Whitelist approach
+- Size Limits - Prevent large file attacks
+- Cloudinary Integration - Secure cloud storage
+- Malware Scanning - Built-in protection
+
+=====================================
+7. PERFORMANCE OPTIMIZATIONS
+=====================================
+
+Frontend Optimizations:
+- Code Splitting - Lazy loading for route components
+- Image Optimization - WebP format with fallbacks
+- Bundle Analysis - Vite rollup optimizations
+- Caching - Browser caching for static assets
+
+Backend Optimizations:
+- Database Indexing - Optimized queries for messages and users
+- Response Compression - Gzip compression for API responses
+- Connection Pooling - Efficient database connections
+- Memory Management - Proper resource cleanup
+
+Socket.IO Optimizations:
+- Global Socket Manager - Single connection per user
+- Event Throttling - Prevent spam
+- Connection Recovery - Automatic reconnection
+- Scalability Ready - Redis adapter compatible
+
+=====================================
+8. TESTING GUIDE
+=====================================
+
+Test Structure:
+# Backend tests
+npm run test:backend
+
+# Test user creation
+npm run test:users
+
+# Run all tests
+npm run test:all
+
+Available Test Scripts:
+- Unit Tests - Component and function testing
+- Integration Tests - API endpoint testing
+- Socket.IO Tests - Real-time communication testing
+- User Flow Tests - Complete user journey testing
+
+=====================================
+9. CONTRIBUTING GUIDELINES
+=====================================
+
+Development Process:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new features
+5. Submit a pull request
+
+Code Structure Guidelines:
+- Components - Reusable UI components in frontend/src/components/
+- Pages - Route-based components in frontend/src/pages/
+- Hooks - Custom React hooks in frontend/src/Hooks/
+- Controllers - Business logic in backend/controllers/
+- Models - Database schemas in backend/models/
+
+Coding Standards:
+- ESLint - Consistent code formatting
+- Modern JavaScript - ES6+ features
+- React Hooks - Functional components
+- Error Handling - Comprehensive error boundaries
+- TypeScript Ready - Easy migration path
+
+=====================================
+10. RECENT UPDATES & BUG FIXES
+=====================================
+
+Version 2.0.0 - Major Bug fixes & Optimizations
+
+🔧 Critical Issues Resolved:
+- Socket Disconnection Fix: Implemented global socket manager to prevent disconnections during profile updates
+- Profile Photo Upload Fix: Fixed Content-Type handling for FormData uploads to Cloudinary
+- Profile UX Improvements: Added "Save & Exit" functionality with smooth navigation
+- File Cleanup: Removed redundant and test files for production readiness
+
+🚀 Performance Improvements:
+- Global Socket Management: Single connection per user with proper state management
+- Smart Content-Type Handling: Axios interceptor only sets JSON Content-Type for non-FormData
+- Optimized Profile Flow: Streamlined save process with visual feedback
+
+📋 Code Quality:
+- Comprehensive Documentation: Complete README with deployment guides
+- Environment Setup: Clear development and production configurations
+- Testing Ready: Backend tests and development scripts
+
+Status: Production Ready ✅
+- All major bugs resolved
+- Socket connections stable
+- File uploads working
+- Comprehensive documentation
+- Clean codebase
+
+=====================================
+
+For more information or support, please check our GitHub issues or create a new issue.
+Built with ❤️ by Vikash (Team Lead) & Archisman (Fullstack Dev)
