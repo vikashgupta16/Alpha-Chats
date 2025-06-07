@@ -373,12 +373,19 @@ function MessageArea({ socketData, messageHandlerRef }) {
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 dark:bg-[#39ff14]' : 'bg-red-500'}`}></span>
                 <span className="font-mono text-pastel-muted dark:text-[#b3b3ff]"> {isConnected ? 'Connected' : 'Reconnecting...'} </span>
-              </div>
-              {/* New messages count */}
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-pastel-muted dark:text-[#b3b3ff]">New:</span>
-                <span className="font-mono text-pastel-sage dark:text-[#39ff14] font-bold"> {messages?.filter(m => !m.read && m.sender === selectedUser?._id).length || 0} </span>
-              </div>
+              </div>              {/* Typing Indicator */}
+              {typingUsers.includes(selectedUser?._id) && (
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                  <span className="text-pastel-muted dark:text-[#b3b3ff] font-mono text-xs">
+                    {selectedUser?.userName} is typing...
+                  </span>
+                </div>
+              )}
               {/* Last seen */}
               <div className="flex items-center gap-2">
                 <span className="font-mono text-pastel-muted dark:text-[#b3b3ff]">Last seen:</span>
