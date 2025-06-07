@@ -9,7 +9,7 @@ function NotFound() {
   const { theme } = useTheme()
 
   return (
-    <div className='w-full h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-gray-100 via-white to-blue-100 dark:from-[#181c2f] dark:via-[#23234a] dark:to-[#181c2f]'>
+    <div className='w-full h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-pastel-cream via-pastel-lavender to-pastel-peach dark:from-[#181c2f] dark:via-[#23234a] dark:to-[#181c2f]'>
       {/* Animated background grid */}
       <div className="absolute inset-0 opacity-5 pointer-events-none z-0">
         <div className="grid grid-cols-20 gap-1 h-full">
@@ -34,14 +34,14 @@ function NotFound() {
       {/* Main container */}
       <div className='max-w-2xl mx-4 relative z-10'>
         {/* Terminal window */}
-        <div className='backdrop-blur-md bg-white/90 dark:bg-[#23234a]/90 border border-red-300 dark:border-[#ff6f3c]/30 rounded-2xl shadow-2xl'>
+        <div className='backdrop-blur-md bg-pastel-cream/90 dark:bg-[#23234a]/90 border border-pastel-rose dark:border-[#ff6f3c]/30 rounded-2xl shadow-2xl'>
           {/* Terminal header */}
           <div className='flex items-center gap-2 px-4 py-3 border-b border-red-300 dark:border-[#ff6f3c]/20'>
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
             <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
             <div className="w-3 h-3 bg-green-500 dark:bg-[#39ff14] rounded-full"></div>
             <div className="flex-1 text-center">
-              <span className="text-gray-600 dark:text-[#b3b3ff] font-mono text-sm">alpha-chat@error ~ 404</span>
+              <span className="text-pastel-muted dark:text-[#b3b3ff] font-mono text-sm">alpha-chat@error ~ 404</span>
             </div>
           </div>
           
@@ -52,26 +52,26 @@ function NotFound() {
               <FaExclamationTriangle className="text-red-500 dark:text-[#ff6f3c] text-4xl animate-pulse" />
               <div className="text-center">
                 <h1 className='text-6xl font-bold font-mono text-red-500 dark:text-[#ff6f3c] mb-2 animate-pulse'>404</h1>
-                <div className="text-green-600 dark:text-[#39ff14] font-mono text-sm">
+                <div className="text-pastel-sage dark:text-[#39ff14] font-mono text-sm">
                   <span className="text-red-500 dark:text-[#ff6f3c]">ERROR:</span> ROUTE_NOT_FOUND
                 </div>
               </div>
-              <FaCode className="text-yellow-500 dark:text-[#ffe156] text-4xl animate-pulse" />
+              <FaCode className="text-pastel-sunny dark:text-[#ffe156] text-4xl animate-pulse" />
             </div>
             
             {/* Terminal-style error message */}
-            <div className="bg-gray-100 dark:bg-[#181c2f]/70 border border-red-300 dark:border-[#39ff14]/20 rounded-lg p-4 mb-6 text-left">
+            <div className="bg-pastel-lavender dark:bg-[#181c2f]/70 border border-pastel-coral dark:border-[#39ff14]/20 rounded-lg p-4 mb-6 text-left shadow-sm">
               <div className="font-mono text-sm space-y-1">
                 <div className="text-red-500 dark:text-[#ff6f3c]">
-                  <span className="text-green-600 dark:text-[#39ff14]">$</span> navigate --to="{window.location.pathname}"
+                  <span className="text-pastel-sage dark:text-[#39ff14]">$</span> navigate --to="{window.location.pathname}"
                 </div>
-                <div className="text-yellow-600 dark:text-[#ffe156]">
+                <div className="text-pastel-sunny dark:text-[#ffe156]">
                   bash: {window.location.pathname}: No such file or directory
                 </div>
-                <div className="text-gray-600 dark:text-[#b3b3ff]">
+                <div className="text-pastel-muted dark:text-[#b3b3ff]">
                   The requested route does not exist in the Alpha-Chat system.
                 </div>
-                <div className="text-green-600 dark:text-[#39ff14]">
+                <div className="text-pastel-sage dark:text-[#39ff14]">
                   Suggestion: Check available routes or return to main directory.
                 </div>
               </div>
@@ -81,24 +81,23 @@ function NotFound() {
             <div className='flex gap-4 justify-center'>
               <button 
                 onClick={() => navigate(-1)}
-                className='flex items-center gap-2 bg-gray-100 dark:bg-[#181c2f]/70 border border-blue-300 dark:border-[#39ff14]/30 text-blue-600 dark:text-[#39ff14] px-6 py-3 rounded-lg hover:bg-blue-50 dark:hover:bg-[#39ff14]/10 hover:border-blue-400 dark:hover:border-[#39ff14] transition font-mono transform hover:scale-105'
+                className='flex items-center gap-2 bg-pastel-cream dark:bg-[#181c2f]/70 border border-pastel-rose dark:border-[#39ff14]/30 text-pastel-rose dark:text-[#39ff14] px-6 py-3 rounded-lg hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 hover:border-pastel-coral dark:hover:border-[#39ff14] transition font-mono transform hover:scale-105 shadow-sm'
               >
                 <IoArrowBack />
                 Previous Route
               </button>
               <button 
                 onClick={() => navigate('/')}
-                className='flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-[#39ff14] dark:to-[#ffe156] text-white dark:text-[#181c2f] px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 dark:hover:from-[#ffe156] dark:hover:to-[#ff6f3c] transition font-mono font-bold transform hover:scale-105'
+                className='flex items-center gap-2 bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#ffe156] text-white dark:text-[#181c2f] px-6 py-3 rounded-lg hover:from-pastel-coral hover:to-pastel-sunny dark:hover:from-[#ffe156] dark:hover:to-[#ff6f3c] transition font-mono font-bold transform hover:scale-105'
               >
                 <FaTerminal />
                 Return Home
               </button>
             </div>
-            
-            {/* Footer terminal prompt */}
-            <div className="mt-6 text-gray-600 dark:text-[#b3b3ff] font-mono text-sm">
-              <span className="text-green-600 dark:text-[#39ff14]">alpha-chat@system:</span> 
-              <span className="text-yellow-600 dark:text-[#ffe156]">~$</span> 
+              {/* Footer terminal prompt */}
+            <div className="mt-6 text-pastel-purple dark:text-[#b3b3ff] font-mono text-sm">
+              <span className="text-pastel-mint dark:text-[#39ff14]">alpha-chat@system:</span> 
+              <span className="text-pastel-sunny dark:text-[#ffe156]">~$</span>
               <span className="animate-pulse">_</span>
             </div>
           </div>

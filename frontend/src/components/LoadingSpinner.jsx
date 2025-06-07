@@ -7,11 +7,10 @@ const LoadingSpinner = ({ size = "medium", message = "Loading..." }) => {
     large: "w-12 h-12",
     lg: "w-12 h-12"
   }
-
   return (
     <div className="flex flex-col items-center justify-center gap-3">
-      <div className={`${sizeClasses[size]} border-4 border-gray-200 dark:border-gray-700 border-t-[#39ff14] dark:border-t-[#39ff14] rounded-full animate-spin`}></div>
-      {message && <p className="text-gray-600 dark:text-gray-300 text-sm font-mono">{message}</p>}
+      <div className={`${sizeClasses[size]} border-4 border-pastel-border dark:border-pastel-muted border-t-pastel-rose dark:border-t-[#39ff14] rounded-full animate-spin`}></div>
+      {message && <p className="text-pastel-muted dark:text-gray-300 text-sm font-mono">{message}</p>}
     </div>
   )
 }
@@ -19,7 +18,7 @@ const LoadingSpinner = ({ size = "medium", message = "Loading..." }) => {
 const LoadingPage = ({ message = "Loading..." }) => {
   return (
     <div className="w-full h-screen flex items-center justify-center bg-gray-100 dark:bg-[#181c2f]">
-      <div className="bg-white dark:bg-[#23234a] p-8 rounded-lg shadow-lg border border-gray-200 dark:border-[#39ff14]/30">
+      <div className="bg-pastel-cream dark:bg-[#23234a] p-8 rounded-lg shadow-lg border border-pastel-border dark:border-[#39ff14]/30">
         <LoadingSpinner size="large" message={message} />
       </div>
     </div>

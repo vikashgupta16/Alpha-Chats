@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light theme overrides */
+/* Light theme overrides - Artistic pastel background */
 html.light {
   --tw-bg-opacity: 1;
-  background-color: #f8fafc;
+  background-color: #fdf8f6; /* Warm cream white */
 }
 
 html.dark {
@@ -38,18 +38,32 @@ body {
   background-color: #28ca42;
 }
 
-/* Light theme color variables */
+/* Light theme color variables - Artistic Pastel Palette */
 .light {
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f1f5f9;
-  --color-bg-tertiary: #e2e8f0;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #64748b;
-  --color-accent-primary: #3b82f6;
-  --color-accent-secondary: #8b5cf6;
-  --color-accent-tertiary: #f59e0b;
-  --color-border: #e2e8f0;
+  /* Background Colors - Soft pastel canvas */
+  --color-bg-primary: #fdf8f6;           /* Warm cream white - main canvas */
+  --color-bg-secondary: #f0f4ff;         /* Soft lavender mist - secondary areas */
+  --color-bg-tertiary: #fff3f0;          /* Peach whisper - tertiary areas */
+  
+  /* Text Colors - Elegant contrast */
+  --color-text-primary: #2d1b4e;         /* Deep plum - primary text */
+  --color-text-secondary: #5a4a7a;       /* Muted purple - secondary text */
+  --color-text-muted: #8b7fa8;           /* Soft lavender - muted text */
+  
+  /* Accent Colors - Vibrant pastels */
+  --color-accent-primary: #ff8fab;       /* Rose pink - primary accent */
+  --color-accent-secondary: #a8dadc;     /* Mint seafoam - secondary accent */
+  --color-accent-tertiary: #ffd23f;      /* Sunny yellow - tertiary accent */
+  
+  /* Additional pastels for variety */
+  --color-accent-coral: #ff9aa2;         /* Coral blush */
+  --color-accent-peach: #ffb3ba;         /* Soft peach */
+  --color-accent-sage: #c7cedb;          /* Sage blue */
+  --color-accent-lilac: #e2a5f2;         /* Lilac dream */
+  
+  /* Border Colors */
+  --color-border: #e8d5db;               /* Soft dusty rose border */
+  --color-border-accent: #ff8fab;        /* Rose pink border */
 }
 
 /* Dark theme color variables */
