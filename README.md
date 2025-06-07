@@ -86,20 +86,6 @@ npm run dev
 
 ---
 
-## 📱 Screenshots
-
-<div align="center">
-
-### Desktop Experience
-![Desktop](./gitHubAssests/HomeMac.png)
-
-### Mobile Responsive  
-![Mobile](./gitHubAssests/Mobile.png)
-
-</div>
-
----
-
 ## 🌟 Core Features
 
 - **💬 Real-time Messaging** - Socket.IO powered instant chat
