@@ -1,7 +1,7 @@
 // Quick script to clear conversations collection to fix schema issues
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
-import Conversation from '../models/connversation.model.js'
+import Conversation from '../models/conversation.model.js'
 
 dotenv.config()
 

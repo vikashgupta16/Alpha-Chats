@@ -1,5 +1,5 @@
 import uplodOnCloudinary from "../config/cloudinary.js";
-import Conversation from "../models/connversation.model.js";
+import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 
 export const sendMessage = async (req, res) => {
