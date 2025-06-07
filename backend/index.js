@@ -36,9 +36,24 @@ const userActivity = new Map() // Track user activity
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log(`🔌 User connected: ${socket.id}`)
-
   // Handle user joining/login
   socket.on('join', (userId) => {
+    // CRITICAL: Remove any existing connection for this user (prevent multiple connections)
+    const existingConnection = Array.from(onlineUsers.entries())
+      .find(([uId, userData]) => uId === userId);
+    
+    if (existingConnection) {
+      const [existingUserId, existingUserData] = existingConnection;
+      console.log(`🔄 [RECONNECT] User ${userId} replacing old connection ${existingUserData.socketId} with ${socket.id}`);
+      onlineUsers.delete(existingUserId);
+      
+      // Disconnect the old socket if it still exists
+      const oldSocket = io.sockets.sockets.get(existingUserData.socketId);
+      if (oldSocket) {
+        oldSocket.disconnect(true);
+      }
+    }
+    
     onlineUsers.set(userId, {
       socketId: socket.id,
       status: 'online',
@@ -67,13 +82,8 @@ io.on('connection', (socket) => {
       timestamp: new Date()
     })
     
-    console.log(`✅ User ${userId} joined. Online users: ${onlineUsers.size}`)
-  })
+    console.log(`✅ User ${userId} joined. Online users: ${onlineUsers.size}`)  })
 
-  // Enhanced user login event (legacy support)
-  socket.on('user-login', (userId) => {
-    socket.emit('join', userId)
-  })
   // Handle sending messages with enhanced features
   socket.on('sendMessage', async (data) => {
     try {
@@ -159,14 +169,21 @@ io.on('connection', (socket) => {
       if (typingUsers.has(senderId)) {
         typingUsers.delete(senderId)
         socket.broadcast.emit('userStoppedTyping', { userId: senderId })
-      }
-      
-      if (recipient) {
+      }      if (recipient) {
         const [userId, userData] = recipient
-        // Send message to recipient
+        
+        // CRITICAL DEBUG: Check for multiple connections
+        const userConnections = Array.from(onlineUsers.entries())
+          .filter(([uId, uData]) => uId === recipientId)
+        
+        console.log(`🔍 [DEBUG] Recipient connections for ${recipientId}:`, userConnections.length);
+        if (userConnections.length > 1) {
+          console.log('⚠️ [WARNING] Multiple connections detected for same user!', 
+            userConnections.map(([uId, uData]) => uData.socketId));
+        }
+        
+        // Send message to recipient (SINGLE EVENT ONLY)
         io.to(userData.socketId).emit('newMessage', messageData)
-        io.to(userData.socketId).emit('new-message', messageData) // Legacy support
-        io.to(userData.socketId).emit('receive-message', messageData) // Legacy support
         
         // Send delivery confirmation to sender
         socket.emit('messageDelivered', {
@@ -177,7 +194,7 @@ io.on('connection', (socket) => {
           status: 'delivered'
         })
         
-        console.log(`📩 Message delivered: ${senderId} → ${recipientId}`)
+        console.log(`📩 Message delivered: ${senderId} → ${recipientId} (Socket: ${userData.socketId})`)
       } else {
         // User is offline, message saved but not delivered
         socket.emit('messageStatus', {
@@ -190,11 +207,8 @@ io.on('connection', (socket) => {
         console.log(`📱 Message queued for offline user: ${senderId} → ${recipientId}`)
       }
       
-      // Broadcast to sender as well (for multi-device sync)
-      socket.emit('messageSent', {
-        ...messageData,
-        status: recipient ? 'delivered' : 'queued'
-      })
+      // Don't broadcast to sender via Socket.IO to prevent duplicates
+      // They already have the message from HTTP response
       
     } catch (error) {
       console.error('Error saving message:', error)
@@ -203,13 +217,7 @@ io.on('connection', (socket) => {
         error: 'Failed to save message',
         details: error.message
       })
-    }
-  })
-
-  // Legacy send-message support
-  socket.on('send-message', (data) => {
-    socket.emit('sendMessage', data)
-  })
+    }  })
 
   // Enhanced typing indicators
   socket.on('typing', (data) => {

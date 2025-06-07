@@ -39,26 +39,42 @@ function MessageArea() {
   
   useEffect(() => {
     messagesRef.current = messages
-  }, [messages])  // Handle real-time messages with stable callback
+  }, [messages])  // Handle real-time messages - FIXED APPROACH
   const handleNewMessage = useCallback((newMessage) => {
-    // Use ref to get current selectedUser to avoid dependency
-    const currentSelectedUser = selectedUserRef.current
-    const currentMessages = messagesRef.current
+    console.log('📩 [SOCKET] Received message:', {
+      id: newMessage._id,
+      from: newMessage.senderId,
+      to: newMessage.recipientId,
+      message: newMessage.message?.substring(0, 30)
+    });
     
-    if (currentSelectedUser?._id && (newMessage.senderId === currentSelectedUser._id || newMessage.recipientId === currentSelectedUser._id)) {
-      // Check if message already exists to avoid duplicates
-      const existingMessage = currentMessages?.find(msg => 
-        msg._id === newMessage._id || 
-        (msg.message === newMessage.message && 
-         msg.sender === newMessage.senderId && 
-         Math.abs(new Date(msg.createdAt) - new Date(newMessage.createdAt)) < 1000)
-      );
-      
-      if (!existingMessage) {
-        dispatch(addMessage(newMessage))
-      }
+    // CRITICAL: Use ref to get current messages (avoids stale closure)
+    const currentMessages = messagesRef.current;
+    
+    // Rule 1: Never add our own messages from Socket.IO (sender gets via HTTP)
+    if (newMessage.senderId === userData?._id) {
+      console.log('🚫 [SOCKET] Ignoring own message echo');
+      return;
     }
-  }, [dispatch]) // Only depend on dispatch which is stable
+    
+    // Rule 2: Check if message already exists by ID
+    if (currentMessages?.find(msg => msg._id === newMessage._id)) {
+      console.log('🚫 [SOCKET] Message already exists:', newMessage._id);
+      return;
+    }
+    
+    // Rule 3: Transform and add message
+    const transformedMessage = {
+      ...newMessage,
+      sender: newMessage.senderId,
+      reciver: newMessage.recipientId,
+      messageType: newMessage.type,
+      createdAt: newMessage.timestamp
+    };
+    
+    dispatch(addMessage(transformedMessage));
+    console.log('✅ [SOCKET] Added message to state');
+  }, [dispatch, userData?._id])
     const { 
     sendMessage: sendSocketMessage, 
     startTyping, 
@@ -178,17 +194,21 @@ function MessageArea() {
         };
       }      const result = await axios.post(`${serverUrl}/api/message/send/${selectedUser._id}`, payload, { withCredentials: true });
       
-      // Only add message to local state (socket will handle real-time updates for others)
-      // Don't add here to avoid duplicates since socket will handle it
+      console.log('💾 HTTP response received:', result.data._id);
+      
+      // Simply add the HTTP response message (sender's copy)
+      dispatch(addMessage(result.data));
+      console.log('✅ Added HTTP message to state');
       
       // Send via socket for real-time delivery to other clients
       const messageId = sendSocketMessage(socketPayload);
       
-      // Add to local state after successful send
-      dispatch(addMessage(result.data));
-      
       setMessage("");
-      console.log('✅ Message sent with ID:', messageId);
+      console.log('✅ [SENT] Message via HTTP+Socket:', {
+        httpId: result.data._id,
+        socketId: messageId,
+        tempId: tempMessage._tempId
+      });
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send message. Please try again.");

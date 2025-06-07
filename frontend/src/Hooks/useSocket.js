@@ -53,24 +53,9 @@ const useSocket = (onMessageReceived) => {
       socket.on('userStatusUpdate', (data) => {
         console.log('📱 User status update:', data)
         // You can dispatch this to Redux if needed
-      })
-
-      // Message events
+      })      // Message events - SINGLE EVENT LISTENER ONLY
       socket.on('newMessage', (message) => {
         console.log('📩 New message received:', message)
-        if (onMessageReceivedRef.current) {
-          onMessageReceivedRef.current(message)
-        }
-      })
-
-      // Legacy message events for backward compatibility
-      socket.on('new-message', (message) => {
-        if (onMessageReceivedRef.current) {
-          onMessageReceivedRef.current(message)
-        }
-      })
-
-      socket.on('receive-message', (message) => {
         if (onMessageReceivedRef.current) {
           onMessageReceivedRef.current(message)
         }

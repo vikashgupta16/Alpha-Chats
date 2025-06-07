@@ -23,11 +23,13 @@ const userSlice=createSlice({
         setMessages:(state,action)=>{
             state.messages=action.payload;
         },        addMessage:(state,action)=>{
-            state.messages.push(action.payload);
-            // Only move sender to top if it's a new incoming message (not from self)
-            const msg = action.payload;
-            if (msg.sender !== state.userData?._id && state.otherUsers) {
-                const idx = state.otherUsers.findIndex(u => u._id === msg.sender);
+            const newMessage = action.payload;
+            console.log('📝 Redux: Adding message:', newMessage._id);
+            state.messages.push(newMessage);
+            
+            // Move sender to top for incoming messages
+            if (newMessage.sender !== state.userData?._id && state.otherUsers) {
+                const idx = state.otherUsers.findIndex(u => u._id === newMessage.sender);
                 if (idx > 0) {
                     const [user] = state.otherUsers.splice(idx, 1);
                     state.otherUsers.unshift(user);
