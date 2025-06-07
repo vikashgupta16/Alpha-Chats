@@ -151,15 +151,30 @@ function MessageArea({ socketData, messageHandlerRef }) {
       fetchMessages()
     }
   }, [selectedUser?._id, fetchMessages])
-
-  // Mark messages as read when selectedUser changes (separate effect)
+  // Mark messages as read after they are fetched and loaded
   useEffect(() => {
-    if (selectedUser?._id && markAsRead) {
-      markAsRead(selectedUser._id)
-      // Also mark messages as read in local state
-      dispatch(markMessagesAsRead({ senderId: selectedUser._id }))
+    if (selectedUser?._id && messages.length > 0 && !fetchingMessages && markAsRead) {
+      // Check how many unread messages we have before marking as read
+      const unreadMessages = messages.filter(msg => 
+        msg.sender === selectedUser._id && 
+        msg.reciver === userData?._id && 
+        !msg.read
+      );
+      
+      if (unreadMessages.length > 0) {
+        console.log(`📖 [MESSAGE AREA] Marking ${unreadMessages.length} messages as read for user:`, selectedUser._id);
+        
+        // Mark messages as read via socket
+        markAsRead(selectedUser._id)
+        // Also mark messages as read in local state
+        dispatch(markMessagesAsRead({ senderId: selectedUser._id }))
+        
+        console.log(`✅ [MESSAGE AREA] Messages marked as read for user:`, selectedUser._id);
+      } else {
+        console.log(`ℹ️ [MESSAGE AREA] No unread messages to mark for user:`, selectedUser._id);
+      }
     }
-  }, [selectedUser?._id, dispatch]) // Don't include markAsRead in dependencies
+  }, [selectedUser?._id, messages.length, fetchingMessages, markAsRead, dispatch])
   // Typing indicator timer
   useEffect(() => {
     let typingTimer

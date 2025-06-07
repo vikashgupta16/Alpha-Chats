@@ -23,20 +23,41 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
     // Socket data is now passed as props
     console.log('📡 SideBar - Socket connected:', isConnected, 'Online users:', onlineUsers.length);
     
-    // Calculate unread messages for each user
+    // Debug effect to monitor messages changes
+    React.useEffect(() => {
+        if (selectedUser?._id) {
+            const unreadForSelected = getUserUnreadCount(selectedUser._id);
+            console.log(`🔍 [SIDEBAR] Messages changed - Selected user ${selectedUser._id} has ${unreadForSelected} unread messages`);
+        }
+    }, [messages, selectedUser?._id]);
+      // Calculate unread messages for each user
     const getUserUnreadCount = (userId) => {
         // Always show unread count if there are unread messages in Redux state
-        return messages?.filter(msg => 
+        const unreadCount = messages?.filter(msg => 
             msg.sender === userId && 
             msg.reciver === userData?._id && 
             !msg.read
         ).length || 0;
+        
+        // Debug logging for unread count calculation
+        if (selectedUser?._id === userId && unreadCount > 0) {
+            console.log(`🔢 [SIDEBAR] Unread count for ${userId}:`, unreadCount, 'messages:', 
+                messages?.filter(msg => msg.sender === userId && msg.reciver === userData?._id)
+                    .map(m => ({ id: m._id, read: m.read, message: m.message?.substring(0, 20) }))
+            );
+        }
+        
+        return unreadCount;
     };
-    
-    // Get total unread messages
-    const totalUnread = otherUsers?.reduce((total, user) => {
-        return total + getUserUnreadCount(user._id);
-    }, 0) || 0;
+      // Get total unread messages
+    const totalUnread = React.useMemo(() => {
+        const total = otherUsers?.reduce((total, user) => {
+            return total + getUserUnreadCount(user._id);
+        }, 0) || 0;
+        
+        console.log(`📊 [SIDEBAR] Total unread messages calculated:`, total);
+        return total;
+    }, [otherUsers, messages, userData?._id]);
     
     // Check if user is online
     const isUserOnline = (userId) => {
