@@ -83,13 +83,20 @@ io.on('connection', (socket) => {
     })
     
     console.log(`✅ User ${userId} joined. Online users: ${onlineUsers.size}`)  })
-
   // Handle sending messages with enhanced features
   socket.on('sendMessage', async (data) => {
     try {
-      console.log('📩 Received message data:', JSON.stringify(data, null, 2));
+      console.log('📩 [SOCKET] Received message for real-time delivery:', {
+        senderId: data.senderId,
+        recipientId: data.recipientId,
+        messageId: data.messageId,
+        type: data.type
+      });
       
-      const { senderId, recipientId, message, type = 'text', metadata = {} } = data
+      const { senderId, recipientId, message, type = 'text', metadata = {}, messageId, dbId } = data
+      
+      // CRITICAL: Socket.IO should NOT create messages in database
+      // Messages are created via HTTP route. Socket.IO only handles real-time delivery.
       
       // Update user activity
       if (userActivity.has(senderId)) {
@@ -119,48 +126,20 @@ io.on('connection', (socket) => {
         messageContent = data.terminal || message
       }
       
-      // Save message to database
-      const newMessage = await Message.create({
-        sender: senderId,
-        reciver: recipientId,
-        message: messageContent,
-        messageType: type,
-        files: enhancedMetadata.files || []
-      })
-
-      // Update or create conversation
-      let conversation = await Conversation.findOne({
-        participants: { $all: [senderId, recipientId] }
-      })
-
-      if (!conversation) {
-        conversation = await Conversation.create({
-          participants: [senderId, recipientId],
-          messages: [newMessage._id]
-        })
-      } else {
-        // Ensure messages is an array (handle old schema)
-        if (!Array.isArray(conversation.messages)) {
-          conversation.messages = conversation.messages ? [conversation.messages] : []
-        }
-        conversation.messages.push(newMessage._id)
-        conversation.lastMessage = new Date()
-        await conversation.save()
-      }
-
-      // Find recipient's socket and delivery status
+      // DO NOT CREATE MESSAGE IN DATABASE - HTTP route handles that
+      // Socket.IO is ONLY for real-time delivery to recipients      // Find recipient's socket and delivery status
       const recipient = Array.from(onlineUsers.entries())
         .find(([userId, userData]) => userId === recipientId)
       
       const messageData = {
-        _id: newMessage._id,
-        messageId: data.messageId,
+        _id: dbId || `temp_${messageId}`, // Use database ID if available
+        messageId: messageId,
         senderId,
         recipientId,
         message: messageContent,
         type,
         metadata: enhancedMetadata,
-        timestamp: newMessage.createdAt,
+        timestamp: new Date(), // Use current timestamp for socket delivery
         delivered: !!recipient,
         read: false
       }
@@ -169,7 +148,9 @@ io.on('connection', (socket) => {
       if (typingUsers.has(senderId)) {
         typingUsers.delete(senderId)
         socket.broadcast.emit('userStoppedTyping', { userId: senderId })
-      }      if (recipient) {
+      }
+      
+      if (recipient) {
         const [userId, userData] = recipient
         
         // CRITICAL DEBUG: Check for multiple connections
@@ -182,42 +163,40 @@ io.on('connection', (socket) => {
             userConnections.map(([uId, uData]) => uData.socketId));
         }
         
-        // Send message to recipient (SINGLE EVENT ONLY)
+        // Send message to recipient ONLY (not to sender)
         io.to(userData.socketId).emit('newMessage', messageData)
         
         // Send delivery confirmation to sender
         socket.emit('messageDelivered', {
-          messageId: data.messageId,
+          messageId: messageId,
           recipientId,
           timestamp: new Date(),
-          dbId: newMessage._id,
           status: 'delivered'
         })
         
-        console.log(`📩 Message delivered: ${senderId} → ${recipientId} (Socket: ${userData.socketId})`)
+        console.log(`📩 [SOCKET] Message delivered: ${senderId} → ${recipientId} (Socket: ${userData.socketId})`)
       } else {
         // User is offline, message saved but not delivered
         socket.emit('messageStatus', {
-          messageId: data.messageId,
+          messageId: messageId,
           status: 'offline',
-          recipientId,
-          dbId: newMessage._id
+          recipientId
         })
         
-        console.log(`📱 Message queued for offline user: ${senderId} → ${recipientId}`)
+        console.log(`📱 [SOCKET] Recipient offline: ${senderId} → ${recipientId}`)
       }
       
-      // Don't broadcast to sender via Socket.IO to prevent duplicates
-      // They already have the message from HTTP response
+      // CRITICAL: Do NOT send message back to sender via Socket.IO
+      // Sender gets their message copy from HTTP response only
       
     } catch (error) {
-      console.error('Error saving message:', error)
+      console.error('❌ [SOCKET] Error in message delivery:', error)
       socket.emit('messageError', {
         messageId: data.messageId,
-        error: 'Failed to save message',
+        error: 'Failed to deliver message',
         details: error.message
       })
-    }  })
+    }})
 
   // Enhanced typing indicators
   socket.on('typing', (data) => {

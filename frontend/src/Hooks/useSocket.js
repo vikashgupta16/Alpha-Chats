@@ -9,9 +9,11 @@ const useSocket = (onMessageReceived) => {
   const [isConnected, setIsConnected] = useState(false)
   const [onlineUsers, setOnlineUsers] = useState([])
   const [typingUsers, setTypingUsers] = useState(new Set())
+  
   // Use ref to store the callback to avoid dependency issues
   const onMessageReceivedRef = useRef(onMessageReceived)
-    useEffect(() => {
+  
+  useEffect(() => {
     onMessageReceivedRef.current = onMessageReceived
   }, [onMessageReceived])
 
@@ -23,37 +25,51 @@ const useSocket = (onMessageReceived) => {
         return;
       }
       
-      // Disconnect any existing socket first
+      // Enhanced cleanup: Disconnect any existing socket first
       if (socketRef.current) {
         console.log('🔌 Disconnecting existing socket before creating new one');
+        socketRef.current.removeAllListeners(); // Remove all event listeners
         socketRef.current.disconnect();
         socketRef.current = null;
-      }
-
-      console.log('🚀 Initializing socket connection to:', socketUrl);
-      
-      // Initialize socket connection
-      socketRef.current = io(socketUrl, {
-        withCredentials: true,
-        transports: ['websocket', 'polling'],
-        forceNew: true // Force new connection to prevent reuse
-      })
-
-      const socket = socketRef.current
-
-      // Connection events
-      socket.on('connect', () => {
-        console.log('🔌 Connected to server')
-        setIsConnected(true)
-        // Join user to their room
-        socket.emit('join', userData._id)
         
-        // Brief delay to allow message loading to complete before listening
-        // This helps prevent race conditions on page refresh
+        // Brief delay to ensure cleanup
         setTimeout(() => {
-          console.log('🎧 Socket message listener activated');
+          initializeSocket();
         }, 100);
-      })
+        return;
+      }
+      
+      initializeSocket();
+      
+      function initializeSocket() {
+        console.log('🚀 Initializing socket connection to:', socketUrl);
+        
+        // Initialize socket connection with enhanced options
+        socketRef.current = io(socketUrl, {
+          withCredentials: true,
+          transports: ['websocket', 'polling'],
+          forceNew: true, // Force new connection to prevent reuse
+          timeout: 10000, // 10 second timeout
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000
+        });
+
+        const socket = socketRef.current;
+
+        // Connection events
+        socket.on('connect', () => {
+          console.log('🔌 Connected to server')
+          setIsConnected(true)
+          // Join user to their room
+          socket.emit('join', userData._id)
+          
+          // Brief delay to allow message loading to complete before listening
+          // This helps prevent race conditions on page refresh
+          setTimeout(() => {
+            console.log('🎧 Socket message listener activated');
+          }, 100);
+        });
 
       socket.on('disconnect', () => {
         console.log('❌ Disconnected from server')
@@ -124,18 +140,20 @@ const useSocket = (onMessageReceived) => {
       // User activity events
       socket.on('userActivityUpdate', (data) => {
         console.log('📊 User activity:', data)
-      })
-
-      // Error handling
+      })      // Error handling
       socket.on('connect_error', (error) => {
         console.error('❌ Connection error:', error)
         setIsConnected(false)
       })
+    } // End of initializeSocket function
 
       return () => {
         console.log('🔌 Disconnecting socket')
-        socket.disconnect()
-        socketRef.current = null
+        if (socketRef.current) {
+          socketRef.current.removeAllListeners()
+          socketRef.current.disconnect()
+          socketRef.current = null
+        }
         setIsConnected(false)
       }
     }

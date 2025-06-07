@@ -33,12 +33,21 @@ const userSlice=createSlice({
                 return;
             }
             
+            // Normalize property names - handle both 'reciver' and 'recipientId'
+            const normalizedMessage = {
+                ...newMessage,
+                sender: newMessage.sender || newMessage.senderId,
+                reciver: newMessage.reciver || newMessage.recipientId,
+                messageType: newMessage.messageType || newMessage.type,
+                createdAt: newMessage.createdAt || newMessage.timestamp
+            };
+            
             // Fallback: Check for duplicates by content + timestamp (for temp messages)
             const isDuplicate = state.messages.some(existingMsg => 
-                existingMsg.message === newMessage.message &&
-                existingMsg.sender === newMessage.sender &&
-                existingMsg.reciver === newMessage.reciver &&
-                Math.abs(new Date(existingMsg.createdAt) - new Date(newMessage.createdAt)) < 5000 // 5 second window
+                existingMsg.message === normalizedMessage.message &&
+                existingMsg.sender === normalizedMessage.sender &&
+                existingMsg.reciver === normalizedMessage.reciver &&
+                Math.abs(new Date(existingMsg.createdAt) - new Date(normalizedMessage.createdAt)) < 5000 // 5 second window
             );
             
             if (isDuplicate) {
@@ -47,12 +56,12 @@ const userSlice=createSlice({
             }
             
             // Safe to add the message
-            state.messages.push(newMessage);
+            state.messages.push(normalizedMessage);
             console.log('✅ Redux: Message added successfully');
             
             // Move sender to top for incoming messages
-            if (newMessage.sender !== state.userData?._id && state.otherUsers) {
-                const idx = state.otherUsers.findIndex(u => u._id === newMessage.sender);
+            if (normalizedMessage.sender !== state.userData?._id && state.otherUsers) {
+                const idx = state.otherUsers.findIndex(u => u._id === normalizedMessage.sender);
                 if (idx > 0) {
                     const [user] = state.otherUsers.splice(idx, 1);
                     state.otherUsers.unshift(user);

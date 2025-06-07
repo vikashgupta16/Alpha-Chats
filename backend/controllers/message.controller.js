@@ -149,26 +149,14 @@ export const uploadFiles = async (req, res) => {
         } else {
             conversation.messages.push(newMessage._id);
             await conversation.save();
-        }
-
-        // Emit file message through socket if available
-        if (req.io && req.onlineUsers) {
-            const recipient = Array.from(req.onlineUsers.entries())
-                .find(([userId]) => userId === reciver);
-            
-            if (recipient) {
-                const [userId, userData] = recipient;
-                req.io.to(userData.socketId).emit('newMessage', {
-                    messageId: newMessage._id,
-                    senderId: sender,
-                    recipientId: reciver,
-                    message: newMessage.message,
-                    type: 'file',
-                    metadata: { files: fileUrls },
-                    timestamp: new Date()
-                });
-            }
-        }
+        }        // DO NOT emit file message through socket here
+        // File messages should follow the same pattern as text messages:
+        // 1. HTTP response gives message to sender
+        // 2. Socket.IO delivers to recipient only (if frontend chooses to use it)
+        // Emitting here causes duplicates because the frontend may also send via socket
+        
+        console.log('📁 File message created, HTTP response sent to sender');
+        console.log('ℹ️ Socket delivery should be handled by frontend if needed');
 
         return res.status(201).json({
             message: "Files uploaded successfully",

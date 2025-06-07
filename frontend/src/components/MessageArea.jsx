@@ -63,14 +63,25 @@ function MessageArea({ socketData, messageHandlerRef }) {
       console.log('🚫 [SOCKET] Ignoring own message echo');
       return;
     }
-    
-    // Rule 2: Check if message already exists by ID
-    if (currentMessages?.find(msg => msg._id === newMessage._id)) {
-      console.log('🚫 [SOCKET] Message already exists:', newMessage._id);
+      // Rule 2: Check if message already exists by ID (most reliable)
+    if (newMessage._id && currentMessages?.find(msg => msg._id === newMessage._id)) {
+      console.log('🚫 [SOCKET] Message already exists by ID:', newMessage._id);
       return;
     }
     
-    // Rule 3: Transform and add message
+    // Rule 3: Check for content duplicates (fallback protection)
+    const isDuplicate = currentMessages?.some(existingMsg => 
+      existingMsg.message === newMessage.message &&
+      existingMsg.sender === newMessage.senderId &&
+      (existingMsg.recipientId === newMessage.recipientId || existingMsg.reciver === newMessage.recipientId) &&
+      Math.abs(new Date(existingMsg.createdAt || existingMsg.timestamp) - new Date(newMessage.timestamp)) < 3000
+    );
+    
+    if (isDuplicate) {
+      console.log('🚫 [SOCKET] Duplicate message by content+time, skipping');
+      return;
+    }
+      // Rule 3: Transform and add message with proper normalization
     const transformedMessage = {
       ...newMessage,
       sender: newMessage.senderId,
@@ -78,8 +89,9 @@ function MessageArea({ socketData, messageHandlerRef }) {
       messageType: newMessage.type,
       createdAt: newMessage.timestamp
     };
-      dispatch(addMessage(transformedMessage));
-    console.log('✅ [SOCKET] Added message to state');  }, [dispatch, userData?._id, fetchingMessages])
+    
+    dispatch(addMessage(transformedMessage));
+    console.log('✅ [SOCKET] Added message to state');}, [dispatch, userData?._id, fetchingMessages])
   
   // Set the message handler ref so Home component can use it
   useEffect(() => {
@@ -224,10 +236,15 @@ function MessageArea({ socketData, messageHandlerRef }) {
       // Simply add the HTTP response message (sender's copy)
       dispatch(addMessage(result.data));
       console.log('✅ Added HTTP message to state');
+        // Send via socket for real-time delivery to other clients
+      // CRITICAL: Pass database ID to socket for proper tracking
+      const socketPayloadWithDbId = {
+        ...socketPayload,
+        dbId: result.data._id // Include database ID
+      };
+      const messageId = sendSocketMessage(socketPayloadWithDbId);
       
-      // Send via socket for real-time delivery to other clients
-      const messageId = sendSocketMessage(socketPayload);
-        setMessage("");
+      setMessage("");
       console.log('✅ [SENT] Message via HTTP+Socket:', {
         httpId: result.data._id,
         socketId: messageId
