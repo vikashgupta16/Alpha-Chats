@@ -79,3 +79,64 @@ body {
   --color-accent-tertiary: #ff6f3c;
   --color-border: #39ff14;
 }
+
+/* Scrollbar Styling for Light Theme */
+.light ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: #f0f4ff; /* Soft lavender mist background */
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #c7cedb; /* Sage blue */
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #8b7fa8; /* Soft lavender on hover */
+}
+
+.light ::-webkit-scrollbar-corner {
+  background: #f0f4ff;
+}
+
+/* Scrollbar Styling for Dark Theme */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #181c2f; /* Primary dark background */
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #2d1e60; /* Tertiary dark color */
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #7f53ac; /* Muted purple on hover */
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: #181c2f;
+}
+
+/* Firefox scrollbar support */
+.light {
+  scrollbar-width: thin;
+  scrollbar-color: #c7cedb #f0f4ff;
+}
+
+.dark {
+  scrollbar-width: thin;
+  scrollbar-color: #2d1e60 #181c2f;
+}
