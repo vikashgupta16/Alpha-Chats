@@ -10,6 +10,7 @@ import LoadingSpinner from './LoadingSpinner';
 import { useTheme } from './ThemeContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { formatLastSeen } from '../utils/dateUtils';
 
 function MessageArea({ socketData, messageHandlerRef }) {
   const { theme } = useTheme();
@@ -400,12 +401,13 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     {selectedUser?.userName} is typing...
                   </span>
                 </div>
-              )}
-              {/* Last seen */}
+              )}              {/* Last seen */}
               <div className="flex items-center gap-2">
                 <span className="font-mono text-pastel-muted dark:text-[#b3b3ff]">Last seen:</span>
-                <span className="font-mono text-pastel-sage dark:text-[#39ff14]"> {onlineUsers.includes(selectedUser?._id) ? 'Now' : (selectedUser?.lastSeen ? new Date(selectedUser.lastSeen).toLocaleString() : 'Unknown')} </span>
-              </div>            </div>            {/* Messages Area */}
+                <span className="font-mono text-pastel-sage dark:text-[#39ff14]"> 
+                  {onlineUsers.includes(selectedUser?._id) ? 'Now' : formatLastSeen(selectedUser?.lastSeen)}
+                </span>
+              </div></div>            {/* Messages Area */}
             <div className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4 ${isMobile ? 'pb-40' : ''}`} style={isMobile ? {paddingBottom: '180px', position: 'static'} : {paddingBottom: '180px'}}>              {fetchingMessages ? (
                 <div className='flex items-center justify-center h-full'>
                   <div className="bg-pastel-cream dark:bg-[#23234a] rounded-xl p-8 border border-pastel-rose dark:border-[#39ff14]/30 shadow-lg">

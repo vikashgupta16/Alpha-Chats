@@ -8,6 +8,7 @@ import userRouter from "./routes/user.routes.js"
 import messageRouter from "./routes/message.routes.js"
 import { Server } from "socket.io"
 import http from "http"
+import User from "./models/user.model.js"
 import Message from "./models/message.model.js"
 import Conversation from "./models/conversation.model.js"
 
@@ -35,9 +36,8 @@ const userActivity = new Map() // Track user activity
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log(`🔌 User connected: ${socket.id}`)
-  // Handle user joining/login
-  socket.on('join', (userId) => {
+  console.log(`🔌 User connected: ${socket.id}`)  // Handle user joining/login
+  socket.on('join', async (userId) => {
     // CRITICAL: Remove any existing connection for this user (prevent multiple connections)
     const existingConnection = Array.from(onlineUsers.entries())
       .find(([uId, userData]) => uId === userId);
@@ -54,35 +54,50 @@ io.on('connection', (socket) => {
       }
     }
     
+    const currentTime = new Date()
+    
     onlineUsers.set(userId, {
       socketId: socket.id,
       status: 'online',
-      lastSeen: new Date(),
-      joinedAt: new Date()
+      lastSeen: currentTime,
+      joinedAt: currentTime
     })
+    
+    // Update user status in database
+    try {
+      await User.findByIdAndUpdate(userId, {
+        status: 'online',
+        isOnline: true,
+        lastSeen: currentTime
+      })
+      console.log(`💾 Updated online status in database for user ${userId}`)
+    } catch (error) {
+      console.error(`❌ Failed to update online status for user ${userId}:`, error)
+    }
     
     // Initialize activity tracking
     userActivity.set(userId, {
       messagesSent: 0,
-      sessionStart: new Date(),
-      lastActivity: new Date()
+      sessionStart: currentTime,
+      lastActivity: currentTime
     })
     
     // Broadcast updated online users list to all clients
     io.emit('onlineUsers', {
       users: Array.from(onlineUsers.keys()),
       count: onlineUsers.size,
-      timestamp: new Date()
+      timestamp: currentTime
     })
     
     // Send user status update
     socket.broadcast.emit('userStatusUpdate', {
       userId,
       status: 'online',
-      timestamp: new Date()
+      timestamp: currentTime
     })
     
-    console.log(`✅ User ${userId} joined. Online users: ${onlineUsers.size}`)  })
+    console.log(`✅ User ${userId} joined. Online users: ${onlineUsers.size}`)
+  })
   // Handle sending messages with enhanced features
   socket.on('sendMessage', async (data) => {
     try {
@@ -298,9 +313,8 @@ io.on('connection', (socket) => {
       timestamp: new Date()
     })
   })
-
   // Handle disconnection
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     // Find and remove user from online users
     const userEntry = Array.from(onlineUsers.entries())
       .find(([userId, userData]) => userData.socketId === socket.id)
@@ -308,9 +322,23 @@ io.on('connection', (socket) => {
     if (userEntry) {
       const [userId] = userEntry
       
-      // Update last seen time
-      onlineUsers.get(userId).lastSeen = new Date()
+      const currentTime = new Date()
+      
+      // Update last seen time in memory
+      onlineUsers.get(userId).lastSeen = currentTime
       onlineUsers.get(userId).status = 'offline'
+      
+      // IMPORTANT: Update lastSeen in database for persistent storage
+      try {
+        await User.findByIdAndUpdate(userId, {
+          lastSeen: currentTime,
+          status: 'offline',
+          isOnline: false
+        })
+        console.log(`💾 Updated lastSeen in database for user ${userId}`)
+      } catch (error) {
+        console.error(`❌ Failed to update lastSeen for user ${userId}:`, error)
+      }
       
       // Clean up typing status
       typingUsers.delete(userId)
@@ -322,14 +350,15 @@ io.on('connection', (socket) => {
       io.emit('onlineUsers', {
         users: Array.from(onlineUsers.keys()),
         count: onlineUsers.size,
-        timestamp: new Date()
+        timestamp: currentTime
       })
       
       // Broadcast user offline status
       socket.broadcast.emit('userStatusUpdate', {
         userId,
         status: 'offline',
-        timestamp: new Date()
+        lastSeen: currentTime,
+        timestamp: currentTime
       })
       
       console.log(`❌ User ${userId} disconnected. Online users: ${onlineUsers.size}`)
