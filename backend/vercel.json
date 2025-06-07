@@ -1,8 +1,9 @@
 {
   "version": 2,
+  "name": "alpha-chats-api",
   "builds": [
     {
-      "src": "index.js",
+      "src": "serverless.js",
       "use": "@vercel/node",
       "config": {
         "maxLambdaSize": "50mb"
@@ -12,18 +13,19 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/index.js"
-    },
-    {
-      "src": "/socket.io/(.*)",
-      "dest": "/index.js"
+      "dest": "/serverless.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.js"
+      "dest": "/serverless.js"
     }
   ],
   "env": {
     "NODE_ENV": "production"
+  },
+  "functions": {
+    "serverless.js": {
+      "maxDuration": 30
+    }
   }
 }

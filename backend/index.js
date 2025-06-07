@@ -19,9 +19,8 @@ const server = http.createServer(app)
 
 // Initialize Socket.io with CORS settings
 const io = new Server(server, {
-  cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? "https://alpha-chats.vercel.app" // Single exact string for production
+  cors: {    origin: process.env.NODE_ENV === 'production' 
+      ? ["https://alpha-chats.vercel.app", "https://alpha-chats-api.vercel.app"] // Updated production URLs
       : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "https://congenial-trout-wr97rgrgx7xg29xq4-4000.app.github.dev/","http://localhost:5176","https://congenial-trout-wr97rgrgx7xg29xq4-5173.app.github.dev",
     "https://congenial-trout-wr97rgrgx7xg29xq4-5173.app.github.dev/"],
     methods: ["GET", "POST"],
@@ -353,7 +352,7 @@ io.on('connection', (socket) => {
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? "https://alpha-chats.vercel.app" // Single exact string for production
+    ? ["https://alpha-chats.vercel.app", "https://alpha-chats-api.vercel.app"] // Updated production URLs
     : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
   credentials: true
 }))

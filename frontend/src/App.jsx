@@ -11,8 +11,10 @@ import getCurrentUser from './Hooks/getCurrentUser'
 import getOtherUsers from './Hooks/getOtherUsers'
 
 function App() {
+  // Use hooks properly
   getCurrentUser()
   getOtherUsers()
+  
   let {userData}=useSelector(state=>state.user)
   return (
     <ErrorBoundary>

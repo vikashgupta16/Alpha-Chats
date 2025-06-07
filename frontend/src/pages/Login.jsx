@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { serverUrl } from '../main';
+import { serverUrl } from '../config/constants';
 import { useDispatch } from 'react-redux';
 import { setUserData } from '../redux/userSlice';
 import { FaTerminal, FaCode } from 'react-icons/fa';

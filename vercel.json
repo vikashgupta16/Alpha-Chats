@@ -30,6 +30,7 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "VITE_API_URL": "https://alpha-chats-backend.vercel.app"
+    "VITE_API_URL": "https://alpha-chats-api.vercel.app",
+    "VITE_SOCKET_URL": "https://alpha-chats-api.vercel.app"
   }
 }

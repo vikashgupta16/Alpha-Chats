@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IoArrowBack } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { serverUrl } from '../main';
+import { serverUrl } from '../config/constants';
 import { setUserData } from '../redux/userSlice';
 import { FaUser, FaEdit } from 'react-icons/fa';
 

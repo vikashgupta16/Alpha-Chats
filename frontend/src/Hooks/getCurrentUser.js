@@ -1,17 +1,18 @@
 import axios from "axios"
 import { useEffect } from "react"
-import { serverUrl } from "../main"
+import { serverUrl } from "../config/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { setUserData } from "../redux/userSlice"
 
-const getCurrentUser=() =>{
-    let dispatch=useDispatch()
-    let {userData}=useSelector(state=>state.user)
-    useEffect(()=>{
-        const fetchUser=async()=>{
+const getCurrentUser = () => {
+    const dispatch = useDispatch()
+    const { userData } = useSelector(state => state.user)
+    
+    useEffect(() => {
+        const fetchUser = async () => {
             try {
-                let result=await axios.get(`${serverUrl}/api/user/current`,{
-                    withCredentials:true,
+                const result = await axios.get(`${serverUrl}/api/user/current`, {
+                    withCredentials: true,
                     headers: {
                         'Content-Type': 'application/json',
                     }
@@ -24,9 +25,10 @@ const getCurrentUser=() =>{
                 console.error("Response data:", error.response?.data)
                 // Clear user data on authentication failure
                 dispatch(setUserData(null))
-            }        }
+            }
+        }
         fetchUser()
-    },[])
+    }, [dispatch])
     
     return userData
 }

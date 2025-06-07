@@ -6,7 +6,7 @@ import { GiCrossMark } from "react-icons/gi";
 import { BiLogOut } from "react-icons/bi";
 import { FiSettings, FiMessageCircle, FiHash, FiUsers } from "react-icons/fi";
 import axios from 'axios';
-import { serverUrl } from '../main';
+import { serverUrl } from '../config/constants';
 import { setSelectedUser, setOtherUsers, setUserData } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './ThemeContext';
