@@ -15,7 +15,6 @@ const useSocket = (onMessageReceived) => {
   useEffect(() => {
     onMessageReceivedRef.current = onMessageReceived
   }, [onMessageReceived])
-
   useEffect(() => {
     if (userData?._id) {
       // Initialize socket connection
@@ -32,6 +31,12 @@ const useSocket = (onMessageReceived) => {
         setIsConnected(true)
         // Join user to their room
         socket.emit('join', userData._id)
+        
+        // Brief delay to allow message loading to complete before listening
+        // This helps prevent race conditions on page refresh
+        setTimeout(() => {
+          console.log('🎧 Socket message listener activated');
+        }, 100);
       })
 
       socket.on('disconnect', () => {

@@ -41,6 +41,12 @@ function MessageArea() {
     messagesRef.current = messages
   }, [messages])  // Handle real-time messages - FIXED APPROACH
   const handleNewMessage = useCallback((newMessage) => {
+    // Skip processing if we're currently fetching messages (page load)
+    if (fetchingMessages) {
+      console.log('⏸️ [SOCKET] Skipping message during fetch phase');
+      return;
+    }
+    
     console.log('📩 [SOCKET] Received message:', {
       id: newMessage._id,
       from: newMessage.senderId,
@@ -74,7 +80,7 @@ function MessageArea() {
     
     dispatch(addMessage(transformedMessage));
     console.log('✅ [SOCKET] Added message to state');
-  }, [dispatch, userData?._id])
+  }, [dispatch, userData?._id, fetchingMessages])
     const { 
     sendMessage: sendSocketMessage, 
     startTyping, 
@@ -90,20 +96,30 @@ function MessageArea() {
     startTypingRef.current = startTyping
     stopTypingRef.current = stopTyping
   }, [startTyping, stopTyping])
-    const fetchMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selectedUser?._id) return
     
+    console.log('🔄 Fetching messages for:', selectedUser.name, selectedUser._id);
     setFetchingMessages(true)
-    try {      const result = await axios.get(`${serverUrl}/api/message/get/${selectedUser._id}`, {
+    try {
+      const result = await axios.get(`${serverUrl}/api/message/get/${selectedUser._id}`, {
         withCredentials: true
       })
-      dispatch(setMessages(result.data || []))
+      
+      const fetchedMessages = result.data || [];
+      console.log('📥 Fetched', fetchedMessages.length, 'messages from database');
+      
+      // Clear existing messages and set new ones (prevents accumulation)
+      dispatch(setMessages(fetchedMessages))
+      
+      console.log('✅ Messages loaded and set in Redux store');
     } catch (error) {
       console.error("Error fetching messages:", error)
       dispatch(setMessages([]))
     } finally {
       setFetchingMessages(false)
-    }  }, [selectedUser?._id, dispatch])
+    }
+  }, [selectedUser?._id, dispatch])
   
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -111,6 +127,7 @@ function MessageArea() {
   }, [messages])  // Fetch messages when selectedUser changes
   useEffect(() => {
     if (selectedUser?._id) {
+      console.log('👤 Selected user changed, fetching messages for:', selectedUser.name);
       fetchMessages()
     }
   }, [selectedUser?._id, fetchMessages])
@@ -202,12 +219,10 @@ function MessageArea() {
       
       // Send via socket for real-time delivery to other clients
       const messageId = sendSocketMessage(socketPayload);
-      
-      setMessage("");
+        setMessage("");
       console.log('✅ [SENT] Message via HTTP+Socket:', {
         httpId: result.data._id,
-        socketId: messageId,
-        tempId: tempMessage._tempId
+        socketId: messageId
       });
     } catch (error) {
       console.error("Error sending message:", error);
