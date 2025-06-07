@@ -24,11 +24,11 @@ const getCurrentUser=() =>{
                 console.error("Response data:", error.response?.data)
                 // Clear user data on authentication failure
                 dispatch(setUserData(null))
-            }
-        }
+            }        }
         fetchUser()
     },[])
+    
+    return userData
 }
-
 
 export default getCurrentUser

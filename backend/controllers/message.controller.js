@@ -36,9 +36,7 @@ export const sendMessage = async (req, res) => {
             console.log('⚡ Terminal message detected:', { command: terminal });
         } else {
             console.log('💬 Text message detected');
-        }
-
-        let conversastion=await Conversation.findOne({
+        }        let conversation=await Conversation.findOne({
             participants:{$all:[sender, reciver]}
         })
         
@@ -57,15 +55,15 @@ export const sendMessage = async (req, res) => {
             contentLength: messageContent?.length || 0
         });
 
-        if(!conversastion){
-            conversastion=await Conversation.create({
+        if(!conversation){
+            conversation=await Conversation.create({
                 participants:[sender, reciver],
                 messages:[newMessage._id]
             })
             console.log('📁 New conversation created');
         }else{
-            conversastion.messages.push(newMessage._id);
-            await conversastion.save();
+            conversation.messages.push(newMessage._id);
+            await conversation.save();
             console.log('📁 Message added to existing conversation');
         }
 
@@ -83,20 +81,19 @@ export const getMessages = async (req, res) => {
             sender: req.userId,
             receiver: req.params.reciver
         });
-        
-        let sender = req.userId;
+          let sender = req.userId;
         let { reciver } = req.params;
-        let conversastion=await Conversation.findOne({
+        let conversation=await Conversation.findOne({
             participants:{$all:[sender, reciver]}
         }).populate("messages")
         
-        if(!conversastion){
+        if(!conversation){
             console.log('📭 No conversation found, returning empty array');
             return res.status(200).json([]);
         }
 
-        console.log('📬 Found conversation with messages:', conversastion.messages?.length || 0);
-        return res.status(200).json(conversastion?.messages || []);
+        console.log('📬 Found conversation with messages:', conversation.messages?.length || 0);
+        return res.status(200).json(conversation?.messages || []);
     } catch (error) {
         console.error('❌ Error in getMessages:', error);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
@@ -131,10 +128,8 @@ export const uploadFiles = async (req, res) => {
 
         if (fileUrls.length === 0) {
             return res.status(500).json({ message: "Failed to upload files" });
-        }
-
-        // Create message with file attachments
-        let conversastion = await Conversation.findOne({
+        }        // Create message with file attachments
+        let conversation = await Conversation.findOne({
             participants: { $all: [sender, reciver] }
         });
         
@@ -146,14 +141,14 @@ export const uploadFiles = async (req, res) => {
             messageType: 'file'
         });
 
-        if (!conversastion) {
-            conversastion = await Conversation.create({
+        if (!conversation) {
+            conversation = await Conversation.create({
                 participants: [sender, reciver],
                 messages: [newMessage._id]
             });
         } else {
-            conversastion.messages.push(newMessage._id);
-            await conversastion.save();
+            conversation.messages.push(newMessage._id);
+            await conversation.save();
         }
 
         // Emit file message through socket if available
