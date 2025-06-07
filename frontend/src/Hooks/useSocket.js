@@ -11,16 +11,32 @@ const useSocket = (onMessageReceived) => {
   const [typingUsers, setTypingUsers] = useState(new Set())
   // Use ref to store the callback to avoid dependency issues
   const onMessageReceivedRef = useRef(onMessageReceived)
-  
-  useEffect(() => {
+    useEffect(() => {
     onMessageReceivedRef.current = onMessageReceived
   }, [onMessageReceived])
+
   useEffect(() => {
     if (userData?._id) {
+      // Prevent multiple connections - check if socket exists and is connected
+      if (socketRef.current?.connected) {
+        console.log('🔄 Socket already connected, skipping');
+        return;
+      }
+      
+      // Disconnect any existing socket first
+      if (socketRef.current) {
+        console.log('🔌 Disconnecting existing socket before creating new one');
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+
+      console.log('🚀 Initializing socket connection to:', socketUrl);
+      
       // Initialize socket connection
       socketRef.current = io(socketUrl, {
         withCredentials: true,
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        forceNew: true // Force new connection to prevent reuse
       })
 
       const socket = socketRef.current

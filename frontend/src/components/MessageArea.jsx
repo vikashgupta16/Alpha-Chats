@@ -6,13 +6,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedUser, setMessages, addMessage, markMessagesAsRead } from '../redux/userSlice';
 import axios from 'axios';
 import { serverUrl } from '../config/constants';
-import useSocket from '../Hooks/useSocket';
 import LoadingSpinner from './LoadingSpinner';
 import { useTheme } from './ThemeContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-function MessageArea() {
+function MessageArea({ socketData, messageHandlerRef }) {
   const { theme } = useTheme();
   let {selectedUser, userData, messages} = useSelector(state => state.user)
   let dispatch = useDispatch()
@@ -39,7 +38,9 @@ function MessageArea() {
   
   useEffect(() => {
     messagesRef.current = messages
-  }, [messages])  // Handle real-time messages - FIXED APPROACH
+  }, [messages])
+  
+  // Handle real-time messages - FIXED APPROACH
   const handleNewMessage = useCallback((newMessage) => {
     // Skip processing if we're currently fetching messages (page load)
     if (fetchingMessages) {
@@ -77,11 +78,18 @@ function MessageArea() {
       messageType: newMessage.type,
       createdAt: newMessage.timestamp
     };
-    
-    dispatch(addMessage(transformedMessage));
-    console.log('✅ [SOCKET] Added message to state');
-  }, [dispatch, userData?._id, fetchingMessages])
-    const { 
+      dispatch(addMessage(transformedMessage));
+    console.log('✅ [SOCKET] Added message to state');  }, [dispatch, userData?._id, fetchingMessages])
+  
+  // Set the message handler ref so Home component can use it
+  useEffect(() => {
+    if (messageHandlerRef) {
+      messageHandlerRef.current = handleNewMessage
+    }
+  }, [handleNewMessage, messageHandlerRef])
+  
+  // Extract socket functions from props
+  const { 
     sendMessage: sendSocketMessage, 
     startTyping, 
     stopTyping, 
@@ -89,7 +97,7 @@ function MessageArea() {
     onlineUsers, 
     typingUsers,
     markAsRead 
-  } = useSocket(handleNewMessage)
+  } = socketData || {}
   
   // Keep typing function refs updated
   useEffect(() => {

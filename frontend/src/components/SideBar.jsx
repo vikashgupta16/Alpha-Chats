@@ -10,9 +10,8 @@ import { serverUrl } from '../config/constants';
 import { setSelectedUser, setOtherUsers, setUserData } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './ThemeContext';
-import useSocket from '../Hooks/useSocket';
 
-function SideBar() {
+function SideBar({ onlineUsers = [], isConnected = false }) {
     let {userData,otherUsers,selectedUser,messages} = useSelector(state => state.user)
     let [search, setSearch] = useState(false)
     let [searchTerm, setSearchTerm] = useState("")
@@ -21,8 +20,8 @@ function SideBar() {
     let navigate = useNavigate()
     const { theme, toggleTheme } = useTheme();
     
-    // Get online users from socket
-    const { onlineUsers, isConnected } = useSocket();
+    // Socket data is now passed as props
+    console.log('📡 SideBar - Socket connected:', isConnected, 'Online users:', onlineUsers.length);
     
     // Calculate unread messages for each user
     const getUserUnreadCount = (userId) => {
