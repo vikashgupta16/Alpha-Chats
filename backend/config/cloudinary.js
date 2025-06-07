@@ -1,18 +1,12 @@
 import { v2 as cloudinary } from 'cloudinary';
-import fs from "fs"
 
-const uplodOnCloudinary = async (filePath) => {
+const uplodOnCloudinary = async (fileBuffer, originalName) => {
     // Check if we're in development with mock credentials
     const isDevelopmentMock = process.env.NODE_ENV === 'development' && 
                               process.env.CLOUDINARY_CLOUD_NAME === 'dev-mock';
     
     if (isDevelopmentMock) {
         console.log('🟡 Development mode: Skipping Cloudinary upload, using placeholder');
-        
-        // Clean up the temp file
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
         
         // Return a placeholder URL for development
         return `https://via.placeholder.com/400x300.png?text=Dev+Image`;
@@ -26,14 +20,30 @@ const uplodOnCloudinary = async (filePath) => {
     })
 
     try {
-        const uploadResult = await cloudinary.uploader.upload(filePath)
-        fs.unlinkSync(filePath) // Delete the file after upload
-        return uploadResult.secure_url
+        console.log('📤 Uploading buffer to Cloudinary...');
+        
+        // Upload from buffer instead of file path
+        const uploadResult = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    resource_type: 'auto',
+                    folder: 'alpha-chats', // Optional: organize uploads in folders
+                    public_id: `profile_${Date.now()}`, // Generate unique ID
+                },
+                (error, result) => {
+                    if (error) {
+                        console.error('❌ Cloudinary upload error:', error);
+                        reject(error);
+                    } else {
+                        console.log('✅ Cloudinary upload success:', result.secure_url);
+                        resolve(result);
+                    }
+                }
+            ).end(fileBuffer);
+        });
+        
+        return uploadResult.secure_url;
     } catch (error) {
-        // Clean up temp file on error
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
         console.error('❌ Cloudinary upload error:', error);
         throw error;
     }
