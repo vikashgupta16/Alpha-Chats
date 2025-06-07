@@ -20,14 +20,20 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return (        <div className='w-full h-screen flex items-center justify-center bg-gradient-to-br from-[#181c2f] via-[#2d1e60] to-[#39ff14] relative'>
+      // Check theme from document or localStorage
+      const isDark = document.documentElement.classList.contains('dark') || 
+                    localStorage.getItem('theme') === 'dark' ||
+                    (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      
+      return (
+        <div className='w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-white to-blue-100 dark:from-[#181c2f] dark:via-[#2d1e60] dark:to-[#39ff14] relative'>
           {/* Animated background grid */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="grid grid-cols-12 gap-4 h-full">
               {Array.from({ length: 48 }, (_, i) => (
                 <div 
                   key={i} 
-                  className="bg-[#39ff14] rounded-lg animate-pulse" 
+                  className="bg-red-500 dark:bg-[#39ff14] rounded-lg animate-pulse" 
                   style={{ 
                     animationDelay: `${i * 0.1}s`,
                     animationDuration: `${2 + Math.random() * 3}s`
@@ -37,32 +43,32 @@ class ErrorBoundary extends React.Component {
             </div>
           </div>
           
-          <div className='relative z-10 bg-[#23234a] p-8 rounded-2xl shadow-2xl max-w-md text-center border border-[#39ff14]/30'>
+          <div className='relative z-10 bg-white dark:bg-[#23234a] p-8 rounded-2xl shadow-2xl max-w-md text-center border border-red-300 dark:border-[#39ff14]/30'>
             <div className="mb-6">
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">⚠️</span>
               </div>
-              <h1 className='text-2xl font-bold text-red-400 mb-2 font-mono'>System Error</h1>
-              <div className="text-xs text-[#39ff14] font-mono mb-4">ERROR_CODE: 0x001</div>
+              <h1 className='text-2xl font-bold text-red-500 dark:text-red-400 mb-2 font-mono'>System Error</h1>
+              <div className="text-xs text-red-600 dark:text-[#39ff14] font-mono mb-4">ERROR_CODE: 0x001</div>
             </div>
             
-            <p className='text-[#b3b3ff] mb-6 font-mono text-sm'>
+            <p className='text-gray-600 dark:text-[#b3b3ff] mb-6 font-mono text-sm'>
               A critical error has occurred in the system. Please restart the application or contact support.
             </p>
             
             <button 
               onClick={() => window.location.reload()}
-              className='bg-gradient-to-r from-[#39ff14] to-[#7f53ac] text-[#181c2f] px-6 py-3 rounded-lg hover:scale-105 transition-all font-mono font-bold shadow-lg'
+              className='bg-gradient-to-r from-blue-500 to-purple-600 dark:from-[#39ff14] dark:to-[#7f53ac] text-white dark:text-[#181c2f] px-6 py-3 rounded-lg hover:scale-105 transition-all font-mono font-bold shadow-lg'
             >
               RESTART SYSTEM
             </button>
             
             {process.env.NODE_ENV === 'development' && (
               <details className='mt-6 text-left'>
-                <summary className='cursor-pointer text-sm text-[#39ff14] font-mono hover:text-white'>
+                <summary className='cursor-pointer text-sm text-blue-600 dark:text-[#39ff14] font-mono hover:text-blue-800 dark:hover:text-white'>
                   &gt; Show Error Details
                 </summary>
-                <pre className='text-xs mt-3 p-3 bg-[#181c2f] rounded border border-[#39ff14]/20 overflow-auto text-[#b3b3ff] font-mono'>
+                <pre className='text-xs mt-3 p-3 bg-gray-100 dark:bg-[#181c2f] rounded border border-red-300 dark:border-[#39ff14]/20 overflow-auto text-gray-800 dark:text-[#b3b3ff] font-mono'>
                   {this.state.error && this.state.error.toString()}
                   <br />
                   {this.state.errorInfo && this.state.errorInfo.componentStack}
@@ -73,7 +79,7 @@ class ErrorBoundary extends React.Component {
           
           {/* Ambient glow effects */}
           <div className="fixed top-10 left-10 w-32 h-32 bg-red-500/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="fixed bottom-10 right-10 w-40 h-40 bg-[#39ff14]/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="fixed bottom-10 right-10 w-40 h-40 bg-green-500/20 dark:bg-[#39ff14]/20 rounded-full blur-3xl animate-pulse"></div>
         </div>
       )
     }

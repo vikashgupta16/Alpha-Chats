@@ -2,14 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme overrides */
 html.light {
   --tw-bg-opacity: 1;
-  background-color: #f3f4f6;
+  background-color: #f8fafc;
 }
+
 html.dark {
   --tw-bg-opacity: 1;
   background-color: #181c2f;
 }
+
 body {
   min-height: 100vh;
+  transition: background-color 0.3s ease;
+}
+
+/* Terminal dot styles for consistency */
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.terminal-dot.red {
+  background-color: #ff5f57;
+}
+
+.terminal-dot.yellow {
+  background-color: #ffbd2e;
+}
+
+.terminal-dot.green {
+  background-color: #28ca42;
+}
+
+/* Light theme color variables */
+.light {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f1f5f9;
+  --color-bg-tertiary: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-accent-primary: #3b82f6;
+  --color-accent-secondary: #8b5cf6;
+  --color-accent-tertiary: #f59e0b;
+  --color-border: #e2e8f0;
+}
+
+/* Dark theme color variables */
+.dark {
+  --color-bg-primary: #181c2f;
+  --color-bg-secondary: #23234a;
+  --color-bg-tertiary: #2d1e60;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b3b3ff;
+  --color-text-muted: #7f53ac;
+  --color-accent-primary: #39ff14;
+  --color-accent-secondary: #ffe156;
+  --color-accent-tertiary: #ff6f3c;
+  --color-border: #39ff14;
 }

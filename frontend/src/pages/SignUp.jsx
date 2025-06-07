@@ -5,8 +5,10 @@ import { serverUrl } from '../config/constants';
 import { setUserData } from '../redux/userSlice';
 import { useDispatch } from 'react-redux';
 import { FaUserPlus, FaCode } from 'react-icons/fa';
+import { useTheme } from '../components/ThemeContext';
 
 function SignUp() {
+      const { theme } = useTheme();
       let navigate = useNavigate();
       let [show,setShow] = useState(false)
       let [userName,setUserName]= useState("")
@@ -65,18 +67,15 @@ function SignUp() {
           setLoading(false)
         }
       }
-
   return (
-    <div className={`w-full h-screen flex items-center justify-center relative overflow-auto 
-      ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#ff512f]' : 'bg-gradient-to-br from-[#181c2f] via-[#2d1e60] to-[#39ff14]'}
-    `}>
+    <div className='w-full h-screen flex items-center justify-center relative overflow-auto bg-gradient-to-br from-gray-100 via-white to-blue-100 dark:from-[#0f2027] dark:via-[#2c5364] dark:to-[#ff512f]'>
       {/* Animated background */}
       <div className="absolute inset-0 opacity-10 pointer-events-none z-0">
         <div className="grid grid-cols-16 gap-2 h-full">
           {Array.from({ length: 320 }, (_, i) => (
             <div 
               key={i} 
-              className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-gradient-to-br from-[#ff512f] via-[#dd2476] to-[#1e130c]' : 'bg-[#7f53ac]'} animate-pulse`} 
+              className="bg-purple-500 dark:bg-gradient-to-br dark:from-[#ff512f] dark:via-[#dd2476] dark:to-[#1e130c] animate-pulse" 
               style={{ 
                 animationDelay: `${i * 0.02}s`,
                 animationDuration: `${1.5 + Math.random() * 2}s`
@@ -86,68 +85,68 @@ function SignUp() {
         </div>
       </div>
       {/* Ambient glow effects */}
-      <div className={`fixed top-20 right-20 w-40 h-40 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-[#ff512f]/30' : 'bg-[#7f53ac]/20'} rounded-full blur-3xl animate-pulse z-20`}></div>
-      <div className={`fixed bottom-20 left-20 w-32 h-32 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-[#ffe53b]/20' : 'bg-[#39ff14]/20'} rounded-full blur-3xl animate-pulse z-20`}></div>
-      <div className={`fixed top-1/2 left-1/2 w-24 h-24 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-[#1e130c]/30' : 'bg-[#39ff14]/20'} rounded-full blur-3xl animate-pulse transform -translate-x-1/2 -translate-y-1/2 z-20`}></div>
+      <div className="fixed top-20 right-20 w-40 h-40 bg-purple-500/30 dark:bg-[#ff512f]/30 rounded-full blur-3xl animate-pulse z-20"></div>
+      <div className="fixed bottom-20 left-20 w-32 h-32 bg-yellow-500/20 dark:bg-[#ffe53b]/20 rounded-full blur-3xl animate-pulse z-20"></div>
+      <div className="fixed top-1/2 left-1/2 w-24 h-24 bg-orange-500/20 dark:bg-[#1e130c]/30 rounded-full blur-3xl animate-pulse transform -translate-x-1/2 -translate-y-1/2 z-20"></div>
       {/* Main signup container */}
       <div className='w-full max-w-md mx-4 relative z-10'>
         {/* Terminal window */}
-        <div className={`terminal-window backdrop-blur-md ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-gradient-to-br from-[#232526]/90 via-[#1e130c]/90 to-[#ff512f]/80 border-[#ffe53b]/30' : 'bg-[#23234a]/90 border-[#39ff14]/30'} border rounded-2xl shadow-xl`}>
+        <div className="terminal-window backdrop-blur-md bg-white/90 dark:bg-gradient-to-br dark:from-[#232526]/90 dark:via-[#1e130c]/90 dark:to-[#ff512f]/80 border border-blue-300 dark:border-[#ffe53b]/30 rounded-2xl shadow-xl">
           {/* Terminal header */}
-          <div className={`terminal-header flex items-center gap-2 px-4 py-2 border-b ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'border-[#ffe53b]/20' : 'border-[#39ff14]/20'}`}>
+          <div className="terminal-header flex items-center gap-2 px-4 py-2 border-b border-blue-300 dark:border-[#ffe53b]/20">
             <div className="terminal-dot red"></div>
             <div className="terminal-dot yellow"></div>
             <div className="terminal-dot green"></div>
             <div className="flex-1 text-center">
-              <span className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ffe53b]' : 'text-[#b3b3ff]'} font-mono text-sm`}>alpha-chat@terminal ~ register</span>
+              <span className="text-gray-600 dark:text-[#ffe53b] font-mono text-sm">alpha-chat@terminal ~ register</span>
             </div>
           </div>
           {/* Content area */}
-          <div className='p-8'>
-            {/* Header */}
+          <div className='p-8'>            {/* Header */}
             <div className='text-center mb-8'>
               <div className="flex items-center justify-center gap-3 mb-4">
-                <FaUserPlus className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ff512f]' : 'text-[#7f53ac]'} text-2xl animate-pulse`} />
-                <h1 className={`text-2xl font-bold font-mono ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ffe53b]' : 'text-white'}`}>
-                  Join<span className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ff512f]' : 'text-[#7f53ac]'}`}>Alpha</span><span className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ffe53b]' : 'text-[#39ff14]'}`}>Chat</span>
+                <FaUserPlus className="text-purple-600 dark:text-[#ff512f] text-2xl animate-pulse" />
+                <h1 className="text-2xl font-bold font-mono text-gray-900 dark:text-[#ffe53b]">
+                  Join<span className="text-purple-600 dark:text-[#ff512f]">Alpha</span><span className="text-blue-600 dark:text-[#ffe53b]">Chat</span>
                 </h1>
-                <FaCode className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ffe53b]' : 'text-[#39ff14]'} text-2xl animate-pulse`} />
+                <FaCode className="text-blue-600 dark:text-[#ffe53b] text-2xl animate-pulse" />
               </div>
-              <p className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ff512f]' : 'text-[#b3b3ff]'} font-mono text-sm`}>
-                <span className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ffe53b]' : 'text-[#39ff14]'}`}>$</span> sudo useradd --developer --group=alpha-coders
+              <p className="text-gray-600 dark:text-[#ff512f] font-mono text-sm">
+                <span className="text-blue-600 dark:text-[#ffe53b]">$</span> sudo useradd --developer --group=alpha-coders
               </p>
             </div>
             <form className='w-full flex flex-col gap-[20px] px-8 mt-4' onSubmit={handleSignup}>
-              <input type="text" placeholder='Username' className={`p-3 rounded border ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-[#232526] border-[#ff512f] text-[#ffe53b] placeholder-[#ff512f]/60' : 'border-gray-300'} focus:outline-none focus:ring-2 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'focus:ring-[#ff512f]' : 'focus:ring-[#20c7ff]'} transition`} onChange={(e)=>setUserName(e.target.value)} value={userName}/>
-              <input type="text" placeholder='GitHub' className={`p-3 rounded border ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-[#232526] border-[#ff512f] text-[#ffe53b] placeholder-[#ff512f]/60' : 'border-gray-300'} focus:outline-none focus:ring-2 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'focus:ring-[#ff512f]' : 'focus:ring-[#20c7ff]'} transition`} onChange={(e)=>setGithub(e.target.value)} value={github}/>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
+              <input type="text" placeholder='Username' className="p-3 rounded border bg-gray-100 dark:bg-[#232526] border-blue-300 dark:border-[#ff512f] text-gray-900 dark:text-[#ffe53b] placeholder-gray-500 dark:placeholder-[#ff512f]/60 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-[#ff512f] transition font-mono" onChange={(e)=>setUserName(e.target.value)} value={userName}/>
+              <input type="text" placeholder='GitHub' className="p-3 rounded border bg-gray-100 dark:bg-[#232526] border-blue-300 dark:border-[#ff512f] text-gray-900 dark:text-[#ffe53b] placeholder-gray-500 dark:placeholder-[#ff512f]/60 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-[#ff512f] transition font-mono" onChange={(e)=>setGithub(e.target.value)} value={github}/>
+              {error && <p className="text-red-500 text-sm font-mono animate-pulse">{error}</p>}
               <div className='relative flex items-center'>
                 <input 
                   type={show ? "text" : "password"} 
                   placeholder='Password' 
-                  className={`w-full p-3 rounded border ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-[#232526] border-[#ff512f] text-[#ffe53b] placeholder-[#ff512f]/60' : 'border-gray-300'} focus:outline-none focus:ring-2 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'focus:ring-[#ff512f]' : 'focus:ring-[#20c7ff]'} transition pr-16`}
+                  className="w-full p-3 rounded border bg-gray-100 dark:bg-[#232526] border-blue-300 dark:border-[#ff512f] text-gray-900 dark:text-[#ffe53b] placeholder-gray-500 dark:placeholder-[#ff512f]/60 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-[#ff512f] transition pr-16 font-mono"
                   onChange={(e) => setPassword(e.target.value)}
                   value={password}
                 />
                 <button 
                   type="button" 
-                  className={`absolute right-3 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ff512f]' : 'text-[#20c7ff]'} font-semibold text-sm hover:underline focus:outline-none`} 
+                  className="absolute right-3 text-blue-600 dark:text-[#ff512f] font-semibold text-sm hover:text-blue-800 dark:hover:underline focus:outline-none font-mono" 
                   onClick={() => setShow(s => !s)}
                 >
                   {show ? "Hide" : "Show"}
                 </button>
-              </div>    <button 
+              </div>
+              <button 
                 type="submit"
                 disabled={loading}
-                className={`mt-2 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-[#ff512f] text-[#ffe53b] hover:bg-[#ffe53b] hover:text-[#ff512f]' : 'bg-[#20c7ff] text-white hover:bg-[#1aa6d9]'} font-bold py-3 rounded-lg shadow-md transition disabled:opacity-70`}
+                className="mt-2 bg-blue-600 dark:bg-[#ff512f] text-white dark:text-[#ffe53b] hover:bg-blue-700 dark:hover:bg-[#ffe53b] dark:hover:text-[#ff512f] font-bold py-3 rounded-lg shadow-md transition disabled:opacity-70 font-mono"
               >
                 {loading ? "Loading..." : "Sign Up"}
               </button>
             </form>
             <div className='w-full flex justify-center items-center pb-4'>
-              <span className={`${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ffe53b]' : 'text-gray-500'}`}>Already have an account?</span>
+              <span className="text-gray-600 dark:text-[#ffe53b] font-mono">Already have an account?</span>
               <button onClick={() => navigate("/login")}
-                className={`ml-2 ${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'text-[#ff512f]' : 'text-[#20c7ff]'} font-semibold hover:underline focus:outline-none bg-transparent border-none p-0 cursor-pointer`}>
+                className="ml-2 text-blue-600 dark:text-[#ff512f] font-semibold hover:text-blue-800 dark:hover:underline focus:outline-none bg-transparent border-none p-0 cursor-pointer font-mono">
                 Login
               </button>
             </div>
