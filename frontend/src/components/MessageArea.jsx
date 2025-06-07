@@ -390,20 +390,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
               <div className="flex items-center gap-2">
                 <span className="font-mono text-pastel-muted dark:text-[#b3b3ff]">Last seen:</span>
                 <span className="font-mono text-pastel-sage dark:text-[#39ff14]"> {onlineUsers.includes(selectedUser?._id) ? 'Now' : (selectedUser?.lastSeen ? new Date(selectedUser.lastSeen).toLocaleString() : 'Unknown')} </span>
-              </div>
-            </div>            {/* Typing Indicator */}
-            {typingUsers.includes(selectedUser?._id) && (
-              <div className="px-2 sm:px-4 py-2 border-b border-pastel-border dark:border-[#39ff14]/10">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
-                  <span className="text-pastel-muted dark:text-[#b3b3ff] font-mono text-xs"> {selectedUser?.userName} is typing... </span>
-                </div>
-              </div>
-            )}
-            {/* Messages Area */}
+              </div>            </div>            {/* Messages Area */}
             <div className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4 ${isMobile ? 'pb-40' : ''}`} style={isMobile ? {paddingBottom: '180px', position: 'static'} : {paddingBottom: '180px'}}>              {fetchingMessages ? (
                 <div className='flex items-center justify-center h-full'>
                   <div className="bg-pastel-cream dark:bg-[#23234a] rounded-xl p-8 border border-pastel-rose dark:border-[#39ff14]/30 shadow-lg">
