@@ -24,9 +24,8 @@ async function createTestUsers() {
       password: 'password123',
       github: 'testuser2'
     };
-    
-    try {
-      const response1 = await axios.post(`${serverUrl}/api/auth/register`, user1);
+      try {
+      const response1 = await axios.post(`${serverUrl}/api/auth/signup`, user1);
       console.log('✅ Created user 1:', user1.userName);
     } catch (error) {
       if (error.response?.status === 400) {
@@ -37,7 +36,7 @@ async function createTestUsers() {
     }
     
     try {
-      const response2 = await axios.post(`${serverUrl}/api/auth/register`, user2);
+      const response2 = await axios.post(`${serverUrl}/api/auth/signup`, user2);
       console.log('✅ Created user 2:', user2.userName);
     } catch (error) {
       if (error.response?.status === 400) {

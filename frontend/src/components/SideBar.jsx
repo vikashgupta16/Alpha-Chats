@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import dp from '../assets/pp.webp'
 import { MdOutlinePersonSearch } from "react-icons/md";
 import { GiCrossMark } from "react-icons/gi";
 import { BiLogOut } from "react-icons/bi";
-import { FiSettings, FiMessageCircle, FiHash, FiUsers } from "react-icons/fi";
+import { FiSettings, FiMessageCircle, FiHash, FiUsers, FiWifi, FiWifiOff, FiRefreshCw } from "react-icons/fi";
 import axios from 'axios';
 import { serverUrl } from '../config/constants';
 import { setSelectedUser, setOtherUsers, setUserData } from '../redux/userSlice';
@@ -16,12 +16,37 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
     let [search, setSearch] = useState(false)
     let [searchTerm, setSearchTerm] = useState("")
     let [activeTab, setActiveTab] = useState('chats')
+    let [isLoadingUsers, setIsLoadingUsers] = useState(false)
+    let [connectionError, setConnectionError] = useState(false)
     let dispatch = useDispatch()
     let navigate = useNavigate()
     const { theme, toggleTheme } = useTheme();
-    
-    // Socket data is now passed as props
+      // Socket data is now passed as props
     console.log('📡 SideBar - Socket connected:', isConnected, 'Online users:', onlineUsers.length);
+    console.log('📊 SideBar - Detailed data:', { 
+        onlineUsers, 
+        otherUsers: otherUsers?.length, 
+        isConnected,
+        userData: userData?._id 
+    });
+    
+    // Monitor connection status and users loading
+    useEffect(() => {
+        if (!isConnected) {
+            setConnectionError(true)
+        } else {
+            setConnectionError(false)
+        }
+    }, [isConnected])
+    
+    // Check if users are loading
+    useEffect(() => {
+        if (!otherUsers) {
+            setIsLoadingUsers(true)
+        } else {
+            setIsLoadingUsers(false)
+        }
+    }, [otherUsers])
     
     // Debug effect to monitor messages changes
     React.useEffect(() => {
@@ -30,6 +55,35 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
             console.log(`🔍 [SIDEBAR] Messages changed - Selected user ${selectedUser._id} has ${unreadForSelected} unread messages`);
         }
     }, [messages, selectedUser?._id]);
+    // Manual refresh function for when users list fails to load
+    const refreshUsersList = async () => {
+        setIsLoadingUsers(true)
+        try {
+            console.log('🔄 Manually refreshing users list...')
+            const result = await axios.get(`${serverUrl}/api/user/others`, {
+                withCredentials: true,
+                timeout: 10000,
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+            
+            if (result.data && Array.isArray(result.data)) {
+                dispatch(setOtherUsers(result.data))
+                console.log('✅ Manual refresh successful:', result.data.length, 'users loaded')
+            } else {
+                console.warn('⚠️ Manual refresh returned invalid data')
+                dispatch(setOtherUsers([]))
+            }
+        } catch (error) {
+            console.error('❌ Manual refresh failed:', error)
+            setConnectionError(true)
+        } finally {
+            setIsLoadingUsers(false)
+        }
+    }
+
       // Calculate unread messages for each user
     const getUserUnreadCount = (userId) => {
         // Always show unread count if there are unread messages in Redux state
@@ -108,8 +162,11 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
 
     // On mobile, if a user is selected, hide the sidebar (show only chat)
     if (isMobile && selectedUser) return null;    return (
-        <div className={`lg:w-[350px] w-full h-full border-r border-pastel-border dark:border-[#23234a] shadow-xl flex flex-col 
-          bg-gradient-to-b from-pastel-cream via-pastel-lavender to-pastel-peach dark:from-[#23234a] dark:via-[#181c2f] dark:to-[#23234a]`}>{/* Header */}
+        <div 
+            data-testid="sidebar"
+            className={`lg:w-[350px] w-full h-full border-r border-pastel-border dark:border-[#23234a] shadow-xl flex flex-col 
+          bg-gradient-to-b from-pastel-cream via-pastel-lavender to-pastel-peach dark:from-[#23234a] dark:via-[#181c2f] dark:to-[#23234a]`}>
+            {/* Header */}
             <div className="p-6 pb-3 rounded-b-3xl shadow-md bg-gradient-to-r from-pastel-cream via-pastel-lavender to-pastel-peach dark:from-[#23234a] dark:via-[#181c2f] dark:to-[#23234a] border-b border-pastel-rose dark:border-[#39ff14]/30">
                 <div className="flex items-center gap-4">
                     <img src={userData?.image || dp} alt="Profile" className="w-16 h-16 rounded-2xl border-4 border-pastel-rose dark:border-[#39ff14] shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform" onClick={() => navigate('/profile')} />
@@ -156,87 +213,140 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                         <span>{tab.label}</span>
                     </button>
                 ))}
-            </div>
-            {/* Search Section */}
+            </div>            {/* Search Section */}
             <div className="p-4 pb-2">
-                <div className="relative">
-                    <input
-                        type="text"
-                        placeholder="Search developers..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onFocus={() => setSearch(true)}
-                        onBlur={() => setSearch(false)}                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white font-mono border border-pastel-rose dark:border-[#39ff14] focus:outline-none focus:ring-2 focus:ring-pastel-rose/50 dark:focus:ring-[#39ff14]/30 transition-all placeholder-pastel-muted dark:placeholder-[#b3b3ff] shadow-sm"
-                    />
-                    <MdOutlinePersonSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-pastel-rose dark:text-[#39ff14]" />
-                    {searchTerm && (
-                        <button
-                            onClick={() => setSearchTerm('')}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-pastel-rose dark:text-[#39ff14] hover:text-pastel-coral dark:hover:text-white"
-                        >
-                            <GiCrossMark className='w-[25px] h-[25px]'/>
-                        </button>
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            placeholder="Search developers..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onFocus={() => setSearch(true)}
+                            onBlur={() => setSearch(false)}                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white font-mono border border-pastel-rose dark:border-[#39ff14] focus:outline-none focus:ring-2 focus:ring-pastel-rose/50 dark:focus:ring-[#39ff14]/30 transition-all placeholder-pastel-muted dark:placeholder-[#b3b3ff] shadow-sm"
+                        />
+                        <MdOutlinePersonSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-pastel-rose dark:text-[#39ff14]" />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-pastel-rose dark:text-[#39ff14] hover:text-pastel-coral dark:hover:text-white"
+                            >
+                                <GiCrossMark className='w-[25px] h-[25px]'/>
+                            </button>
+                        )}
+                    </div>                    {/* Manual refresh button */}
+                    <button
+                        onClick={refreshUsersList}
+                        disabled={isLoadingUsers}
+                        className={`p-2 rounded-lg border transition-all duration-200 ${
+                            isLoadingUsers 
+                                ? 'bg-pastel-muted dark:bg-gray-600 cursor-not-allowed' 
+                                : 'bg-pastel-cream dark:bg-[#23234a] border-pastel-rose dark:border-[#39ff14] hover:bg-pastel-lavender dark:hover:bg-[#39ff14]/20'
+                        }`}
+                        title="Refresh developers list"
+                    >
+                        <FiRefreshCw className={`w-4 h-4 text-pastel-rose dark:text-[#39ff14] ${isLoadingUsers ? 'animate-spin' : ''}`} />                    </button>
+                </div>
+                
+                {/* Connection status indicator */}
+                <div className="flex items-center justify-between text-xs font-mono mb-2">
+                    <div className="flex items-center gap-2">
+                        {isConnected ? (
+                            <>
+                                <FiWifi className="w-3 h-3 text-pastel-mint dark:text-[#39ff14]" />
+                                <span className="text-pastel-sage dark:text-[#39ff14]">Connected</span>
+                            </>
+                        ) : (
+                            <>
+                                <FiWifiOff className="w-3 h-3 text-red-500" />
+                                <span className="text-red-500">Disconnected</span>
+                            </>
+                        )}
+                    </div>
+                    {connectionError && (
+                        <span className="text-red-500">Network Issue</span>
                     )}
                 </div>
-            </div>
-            {/* User List */}
+            </div>            {/* User List */}
             <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-3">
-                {(search ? filteredUsers : otherUsers)?.map((user) => {
-                    const userIsOnline = isUserOnline(user._id);
-                    const unreadCount = getUserUnreadCount(user._id);
-                    
-                    return (
-                        <div 
-                            key={user._id}                            className={`w-full p-3 flex items-center gap-3 rounded-xl border transition-all duration-200 cursor-pointer hover:scale-[1.02] ${
-                                selectedUser?._id === user._id                                    ? 'bg-gradient-to-r from-pastel-lavender to-pastel-peach dark:from-[#39ff14]/20 dark:to-[#7f53ac]/20 border-pastel-rose dark:border-[#39ff14] shadow-lg shadow-pastel-rose/20 dark:shadow-[#39ff14]/20' 
-                                    : 'bg-pastel-cream dark:bg-[#23234a]/50 border-pastel-border dark:border-pastel-muted hover:bg-pastel-lavender dark:hover:bg-[#23234a] hover:border-pastel-rose dark:hover:border-[#39ff14]/50'
-                            }`}
-                            onClick={() => dispatch(setSelectedUser(user))}
-                        >
-                            <div className="relative">                                <img 
-                                    src={user.image || dp} 
-                                    alt="Profile" 
-                                    className="w-12 h-12 rounded-xl object-cover border-2 border-pastel-rose dark:border-[#39ff14]/30"
-                                />
-                                {/* Online indicator */}
-                                <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#181c2f] ${
-                                    userIsOnline ? 'bg-pastel-mint dark:bg-[#39ff14] animate-pulse' : 'bg-pastel-muted'
-                                }`}></div>
-                            </div>
-                            <div className="flex-1 min-w-0">                                <div className="flex items-center gap-2">
-                                    <h3 className="text-pastel-plum dark:text-white font-semibold font-mono truncate">
-                                        {user.name || user.userName}
-                                    </h3>
-                                    {userIsOnline && (
-                                        <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono">●</span>
-                                    )}
-                                </div>
-                                <p className="text-pastel-muted dark:text-[#b3b3ff] text-sm font-mono truncate">
-                                    @{user.github || user.userName}
-                                </p>
-                                <div className="flex items-center justify-between mt-1">
-                                    <p className="text-pastel-muted dark:text-gray-400 text-xs font-mono">
-                                        {userIsOnline ? 'Online' : 'Offline'}
-                                    </p>
-                                    {unreadCount > 0 && (
-                                        <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono">
-                                            {unreadCount} new
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-                
-                {(!otherUsers || otherUsers.length === 0) && (                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                {isLoadingUsers ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <div className="w-8 h-8 border-2 border-pastel-rose dark:border-[#39ff14] border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-pastel-muted dark:text-[#b3b3ff] font-mono text-sm">Loading developers...</p>
+                    </div>
+                ) : (!otherUsers || otherUsers.length === 0) ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
                         <div className="w-16 h-16 bg-pastel-lavender dark:bg-[#23234a] rounded-full flex items-center justify-center mb-4 border-2 border-pastel-border dark:border-transparent">
                             <FiUsers className="w-8 h-8 text-pastel-rose dark:text-[#39ff14]" />
-                        </div>                        <p className="text-pastel-muted dark:text-[#b3b3ff] font-mono">No developers found</p>
-                        <p className="text-pastel-muted dark:text-gray-500 text-sm font-mono mt-1">Invite your team to get started</p>
+                        </div>
+                        {connectionError ? (
+                            <>
+                                <p className="text-red-500 font-mono text-sm mb-2">Connection Error</p>
+                                <p className="text-pastel-muted dark:text-[#b3b3ff] font-mono text-xs mb-3">Unable to load developers list</p>
+                                <button
+                                    onClick={refreshUsersList}
+                                    className="px-3 py-1 bg-pastel-rose dark:bg-[#39ff14] text-white dark:text-[#181c2f] rounded-lg font-mono text-xs hover:bg-pastel-coral dark:hover:bg-[#2dd60a] transition-all"
+                                >
+                                    Try Again
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-pastel-muted dark:text-[#b3b3ff] font-mono">No developers found</p>
+                                <p className="text-pastel-muted dark:text-gray-500 text-sm font-mono mt-1">Invite your team to get started</p>
+                            </>
+                        )}
                     </div>
+                ) : (
+                    (search ? filteredUsers : otherUsers)?.map((user) => {
+                        const userIsOnline = isUserOnline(user._id);
+                        const unreadCount = getUserUnreadCount(user._id);
+                        
+                        return (
+                            <div 
+                                key={user._id}                            className={`w-full p-3 flex items-center gap-3 rounded-xl border transition-all duration-200 cursor-pointer hover:scale-[1.02] ${
+                                    selectedUser?._id === user._id                                    ? 'bg-gradient-to-r from-pastel-lavender to-pastel-peach dark:from-[#39ff14]/20 dark:to-[#7f53ac]/20 border-pastel-rose dark:border-[#39ff14] shadow-lg shadow-pastel-rose/20 dark:shadow-[#39ff14]/20' 
+                                        : 'bg-pastel-cream dark:bg-[#23234a]/50 border-pastel-border dark:border-pastel-muted hover:bg-pastel-lavender dark:hover:bg-[#23234a] hover:border-pastel-rose dark:hover:border-[#39ff14]/50'
+                                }`}
+                                onClick={() => dispatch(setSelectedUser(user))}
+                            >
+                                <div className="relative">                                <img 
+                                        src={user.image || dp} 
+                                        alt="Profile" 
+                                        className="w-12 h-12 rounded-xl object-cover border-2 border-pastel-rose dark:border-[#39ff14]/30"
+                                    />
+                                    {/* Online indicator */}
+                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#181c2f] ${
+                                        userIsOnline ? 'bg-pastel-mint dark:bg-[#39ff14] animate-pulse' : 'bg-pastel-muted'
+                                    }`}></div>
+                                </div>
+                                <div className="flex-1 min-w-0">                                <div className="flex items-center gap-2">
+                                        <h3 className="text-pastel-plum dark:text-white font-semibold font-mono truncate">
+                                            {user.name || user.userName}
+                                        </h3>
+                                        {userIsOnline && (
+                                            <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono">●</span>
+                                        )}
+                                    </div>
+                                    <p className="text-pastel-muted dark:text-[#b3b3ff] text-sm font-mono truncate">
+                                        @{user.github || user.userName}
+                                    </p>
+                                    <div className="flex items-center justify-between mt-1">
+                                        <p className="text-pastel-muted dark:text-gray-400 text-xs font-mono">
+                                            {userIsOnline ? 'Online' : 'Offline'}
+                                        </p>
+                                        {unreadCount > 0 && (
+                                            <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono">
+                                                {unreadCount} new
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
                 )}
-            </div>            {/* Bottom Action Bar */}
+            </div>{/* Bottom Action Bar */}
             <div className="sticky bottom-0 left-0 w-full z-30 bg-pastel-peach dark:bg-[#23234a] border-t border-pastel-rose dark:border-[#39ff14]/30 p-2 flex flex-col gap-1">
                 <div className="flex items-center justify-between gap-2">
                     <button className="flex items-center gap-1 text-pastel-purple dark:text-[#b3b3ff] hover:text-pastel-plum dark:hover:text-white transition-colors p-2 rounded-lg hover:bg-pastel-peach dark:hover:bg-[#181c2f]" onClick={() => navigate('/profile')}>

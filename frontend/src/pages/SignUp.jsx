@@ -6,6 +6,7 @@ import { setUserData } from '../redux/userSlice';
 import { useDispatch } from 'react-redux';
 import { FaUserPlus, FaCode } from 'react-icons/fa';
 import { useTheme } from '../components/ThemeContext';
+import TokenManager from '../utils/tokenManager';
 
 function SignUp() {
       const { theme } = useTheme();
@@ -55,6 +56,13 @@ function SignUp() {
             github: github.trim(),
             password
           }, { withCredentials: true })
+          
+          // Store token in localStorage for browsers with cookie issues
+          if (result.data.token) {
+            TokenManager.setToken(result.data.token);
+            console.log('✅ [SignUp] Token stored in localStorage for fallback');
+          }
+          
           dispatch(setUserData(result.data))
           navigate("/profile")
           setUserName("")

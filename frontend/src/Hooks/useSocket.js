@@ -6,15 +6,21 @@ const useSocket = (onMessageReceived) => {
   const { userData } = useSelector(state => state.user)
   const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000"
   const [socketStatus, setSocketStatus] = useState(socketManager.getStatus())
-
   // Handle socket events from global manager
   const handleSocketEvent = useCallback((event, data) => {
+    console.log(`🎯 [useSocket] Received event: ${event}`, data);
     switch (event) {
       case 'connect':
       case 'disconnect':
       case 'onlineUsers':
       case 'userTyping':
-        setSocketStatus(socketManager.getStatus())
+        const newStatus = socketManager.getStatus();
+        console.log(`🔄 [useSocket] Updating socketStatus for event ${event}:`, {
+          isConnected: newStatus.isConnected,
+          onlineUsersCount: newStatus.onlineUsers?.length || 0,
+          onlineUsers: newStatus.onlineUsers
+        });
+        setSocketStatus(newStatus);
         break
       case 'newMessage':
         if (onMessageReceived) {

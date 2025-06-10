@@ -12,6 +12,11 @@ import { serverUrl } from './config/constants.js';
 // Export for backward compatibility
 export { serverUrl }
 
+// Expose store for debugging in development
+if (import.meta.env.DEV) {
+  window.store = store
+}
+
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <Provider store={store}>

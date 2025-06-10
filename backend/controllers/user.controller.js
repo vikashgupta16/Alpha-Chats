@@ -4,14 +4,18 @@ import uplodOnCloudinary from "../config/cloudinary.js";
 
 export const getCurrentUser=async (req,res)=>{
     try {
+        console.log('📝 [getCurrentUser] API called by user:', req.userId)
         let userId=req.userId
         let user=await User.findById(userId).select("-password")
         if(!user){
+            console.log('❌ [getCurrentUser] User not found:', userId)
             return res.status(404).json({message:"User not found"})
         }
 
+        console.log('✅ [getCurrentUser] User found:', user.userName)
         return res.status(200).json(user)
     } catch (error) {
+        console.error('❌ [getCurrentUser] Error:', error)
         return res.status(500).json({message:"Internal server error"})
     }
 }
@@ -98,11 +102,17 @@ export const editProfile=async(req,res)=>{
 
 export const getOtherUser=async(req,res)=>{
     try {
+        console.log('👥 [getOtherUser] API called by user:', req.userId)
         let users=await User.find({
             _id:{$ne:req.userId}})
             .select("-password")
-            return res.status(200).json(users)
+        
+        console.log('✅ [getOtherUser] Found', users.length, 'other users for', req.userId)
+        console.log('📊 [getOtherUser] Users:', users.map(u => ({ id: u._id, userName: u.userName })))
+        
+        return res.status(200).json(users)
     } catch (error) {
+        console.error('❌ [getOtherUser] Error:', error)
         return res.status(500).json({message:"Internal server error"})
     }
 }

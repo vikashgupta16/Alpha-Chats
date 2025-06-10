@@ -15,9 +15,7 @@ export const signUp = async (req,res) => {
         }
         if(password.length<6){
             return res.status(400).json({message:"Password must be atleast 6 characters"})
-        }
-
-        const hashedPassword=await bcrypt.hash(password,10)
+        }        const hashedPassword=await bcrypt.hash(password,10)
         const user=await User.create({
             userName,
             github,
@@ -29,11 +27,17 @@ export const signUp = async (req,res) => {
         res.cookie("token",token,{
             httpOnly:true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? "None" : "Strict",
-            maxAge:7*24*60*60*1000
+            sameSite: process.env.NODE_ENV === 'production' ? "None" : "Lax",
+            maxAge:7*24*60*60*1000,
+            // Remove explicit domain for localhost - let browser handle it
+            path: '/'
         })
 
-        return res.status(201).json(user)
+        // Also return token in response for browsers with cookie issues
+        return res.status(201).json({
+            ...user.toObject(),
+            token: token // Include token for localStorage fallback
+        })
     } catch (error) {
         return res.status(500).json({message:`Internal server Error ${error}`})
     }
@@ -46,22 +50,27 @@ export const login = async (req,res) => {
         if(!user){
           return res.status(400).json({message:"User does not exists"})  
         }
-        
-        const isMatch=await bcrypt.compare(password,user.password)
+          const isMatch=await bcrypt.compare(password,user.password)
         if(!isMatch){
             return res.status(400).json({message:"Invalid credentials"})
-        }        
+        }
 
         const token=await genToken(user._id)
 
         res.cookie("token",token,{
             httpOnly:true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? "None" : "Strict",
-            maxAge:7*24*60*60*1000
+            sameSite: process.env.NODE_ENV === 'production' ? "None" : "Lax",
+            maxAge:7*24*60*60*1000,
+            // Remove explicit domain for localhost - let browser handle it
+            path: '/'
         })
 
-        return res.status(200).json(user)
+        // Also return token in response for browsers with cookie issues
+        return res.status(200).json({
+            ...user.toObject(),
+            token: token // Include token for localStorage fallback
+        })
     } catch (error) {
         return res.status(500).json({message:`Internal server Error ${error}`})
     }
@@ -72,7 +81,9 @@ export const logout = async (req,res) => {
         res.clearCookie("token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? "None" : "Strict",
+            sameSite: process.env.NODE_ENV === 'production' ? "None" : "Lax",
+            // Remove explicit domain for localhost - let browser handle it
+            path: '/'
         })
         return res.status(200).json({message:"Logged out successfully"})
     } catch (error) {

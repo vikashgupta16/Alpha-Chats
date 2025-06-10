@@ -34,9 +34,25 @@ const onlineUsers = new Map()
 const typingUsers = new Map() // Track typing status
 const userActivity = new Map() // Track user activity
 
-// Socket.io connection handling
+// Socket.io connection handling with enhanced browser support
 io.on('connection', (socket) => {
-  console.log(`🔌 User connected: ${socket.id}`)  // Handle user joining/login
+  console.log(`🔌 User connected: ${socket.id}`)
+  
+  // Log browser information from headers
+  const userAgent = socket.handshake.headers['user-agent'] || 'Unknown'
+  const customHeader = socket.handshake.headers['x-custom-header']
+  
+  if (customHeader) {
+    console.log(`📱 Browser type detected: ${customHeader}`)
+  }
+  
+  if (userAgent.includes('SamsungBrowser')) {
+    console.log(`🔧 Samsung Browser detected - using optimized settings`)
+  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+    console.log(`🍎 Safari detected - using extended timeouts`)
+  }
+
+  // Handle user joining/login
   socket.on('join', async (userId) => {
     // CRITICAL: Remove any existing connection for this user (prevent multiple connections)
     const existingConnection = Array.from(onlineUsers.entries())
@@ -81,13 +97,20 @@ io.on('connection', (socket) => {
       sessionStart: currentTime,
       lastActivity: currentTime
     })
-    
-    // Broadcast updated online users list to all clients
-    io.emit('onlineUsers', {
+      // Broadcast updated online users list to all clients
+    const onlineUsersData = {
       users: Array.from(onlineUsers.keys()),
       count: onlineUsers.size,
       timestamp: currentTime
+    }
+    
+    console.log('📤 [BROADCAST] Sending online users to all clients:', {
+      count: onlineUsersData.count,
+      users: onlineUsersData.users,
+      connectedSockets: io.sockets.sockets.size
     })
+    
+    io.emit('onlineUsers', onlineUsersData)
     
     // Send user status update
     socket.broadcast.emit('userStatusUpdate', {
@@ -300,7 +323,6 @@ io.on('connection', (socket) => {
       })
     }
   })
-
   // Get user activity stats
   socket.on('getUserActivity', (userId) => {
     const activity = userActivity.get(userId)
@@ -313,6 +335,21 @@ io.on('connection', (socket) => {
       timestamp: new Date()
     })
   })
+
+  // Debug: Handle manual request for online users
+  socket.on('requestOnlineUsers', () => {
+    console.log('🔍 [DEBUG] Manual request for online users from:', socket.id)
+    
+    const onlineUsersData = {
+      users: Array.from(onlineUsers.keys()),
+      count: onlineUsers.size,
+      timestamp: new Date()
+    }
+    
+    console.log('📤 [DEBUG] Sending online users data:', onlineUsersData)
+    socket.emit('onlineUsers', onlineUsersData)
+  })
+
   // Handle disconnection
   socket.on('disconnect', async () => {
     // Find and remove user from online users
@@ -345,13 +382,20 @@ io.on('connection', (socket) => {
       
       // Remove from online users
       onlineUsers.delete(userId)
-      
-      // Broadcast updated online users list
-      io.emit('onlineUsers', {
+        // Broadcast updated online users list
+      const onlineUsersData = {
         users: Array.from(onlineUsers.keys()),
         count: onlineUsers.size,
         timestamp: currentTime
+      }
+      
+      console.log('📤 [DISCONNECT BROADCAST] Sending updated online users:', {
+        count: onlineUsersData.count,
+        users: onlineUsersData.users,
+        connectedSockets: io.sockets.sockets.size
       })
+      
+      io.emit('onlineUsers', onlineUsersData)
       
       // Broadcast user offline status
       socket.broadcast.emit('userStatusUpdate', {
