@@ -14,11 +14,20 @@ const userSlice=createSlice({
         },
         setOtherUsers:(state,action)=>{
             state.otherUsers=action.payload;
-        },
-        setSelectedUser:(state,action)=>{
-            state.selectedUser=action.payload;
-            state.messages=[]; // Clear messages when switching users
+        },        setSelectedUser:(state,action)=>{
+            const newUser = action.payload;
+            const previousUserId = state.selectedUser?._id;
+            
+            console.log('🔄 [REDUX] Switching to user:', newUser?._id, 'from:', previousUserId);
+            
+            // WhatsApp-like behavior: NEVER clear messages when switching users
+            // Messages should persist globally and be filtered by conversation in components
+            // Only the unread count should be reset when opening a conversation
+            
+            state.selectedUser = newUser;
+            
             // Do NOT move user to top here (WhatsApp logic: only on new message)
+            // Do NOT clear messages here (WhatsApp logic: messages persist globally)
         },
         setMessages:(state,action)=>{
             state.messages=action.payload;

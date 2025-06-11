@@ -79,8 +79,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
       }
     }
   }, [inputFocused, isMobile]);
-  
-  // Handle real-time messages - FIXED APPROACH
+  // Handle real-time messages - ENHANCED APPROACH for global message store
   const handleNewMessage = useCallback((newMessage) => {
     // Skip processing if we're currently fetching messages (page load)
     if (fetchingMessages) {
@@ -92,8 +91,12 @@ function MessageArea({ socketData, messageHandlerRef }) {
       id: newMessage._id,
       from: newMessage.senderId,
       to: newMessage.recipientId,
-      message: newMessage.message?.substring(0, 30)
+      message: newMessage.message?.substring(0, 30),
+      currentSelectedUser: selectedUserRef.current?._id
     });
+    
+    // WhatsApp-like behavior: Process ALL messages for global store
+    // No filtering by current conversation - store everything globally
     
     // CRITICAL: Use ref to get current messages (avoids stale closure)
     const currentMessages = messagesRef.current;
@@ -123,7 +126,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
       return;
     }
     
-    // Rule 3: Transform and add message with proper normalization
+    // Rule 4: Transform and add message with proper normalization
     const transformedMessage = {
       ...newMessage,
       sender: newMessage.senderId,
@@ -133,9 +136,24 @@ function MessageArea({ socketData, messageHandlerRef }) {
     };
     
     dispatch(addMessage(transformedMessage));
-    console.log('✅ [SOCKET] Added message to state');
+    console.log('✅ [SOCKET] Added relevant message to current conversation');
   }, [dispatch, userData?._id, fetchingMessages])
-  
+    // Filter messages for current conversation (WhatsApp-like behavior)
+  const currentConversationMessages = React.useMemo(() => {
+    if (!selectedUser?._id || !userData?._id) return [];
+    
+    const filtered = messages.filter(msg => 
+      (msg.sender === selectedUser._id && msg.reciver === userData._id) ||
+      (msg.sender === userData._id && msg.reciver === selectedUser._id)
+    );
+    
+    // Sort by timestamp to ensure proper ordering
+    const sorted = filtered.sort((a, b) => new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp));
+    
+    console.log(`💬 [CONVERSATION] Filtered ${sorted.length} messages for conversation with ${selectedUser.name || selectedUser._id}`);
+    return sorted;
+  }, [messages, selectedUser?._id, userData?._id]);
+
   // Set the message handler ref so Home component can use it
   useEffect(() => {
     if (messageHandlerRef) {
@@ -159,7 +177,6 @@ function MessageArea({ socketData, messageHandlerRef }) {
     startTypingRef.current = startTyping
     stopTypingRef.current = stopTyping
   }, [startTyping, stopTyping])
-  
   const fetchMessages = useCallback(async () => {
     if (!selectedUser?._id) return
     
@@ -173,36 +190,61 @@ function MessageArea({ socketData, messageHandlerRef }) {
       const fetchedMessages = result.data || [];
       console.log('📥 Fetched', fetchedMessages.length, 'messages from database');
       
-      // Clear existing messages and set new ones (prevents accumulation)
-      dispatch(setMessages(fetchedMessages))
+      // WhatsApp-like behavior: Check if messages for this conversation already exist
+      // Use messagesRef to avoid dependency on messages state
+      const currentMessages = messagesRef.current || [];
+      const conversationMessages = currentMessages.filter(msg => 
+        (msg.sender === selectedUser._id && msg.reciver === userData?._id) ||
+        (msg.sender === userData?._id && msg.reciver === selectedUser._id)
+      );
       
-      console.log('✅ Messages loaded and set in Redux store');
+      if (conversationMessages.length === 0) {
+        // Only add messages if this conversation hasn't been loaded yet
+        console.log('💬 Loading conversation for first time, adding messages to global store');
+        fetchedMessages.forEach(msg => dispatch(addMessage(msg)));
+      } else {
+        console.log('💬 Conversation already loaded, messages exist in global store');
+      }
+      
+      console.log('✅ Messages processed for global store');
     } catch (error) {
       console.error("Error fetching messages:", error)
-      dispatch(setMessages([]))
+      // Don't clear messages on error - keep existing conversations intact
     } finally {
       setFetchingMessages(false)
     }
-  }, [selectedUser?._id, dispatch])
-  
-  // Auto-scroll to bottom when messages change
+  }, [selectedUser?._id, dispatch, userData?._id]) // Removed messages dependency
+  // Auto-scroll to bottom when current conversation messages change or new message added
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
-  
-  // Fetch messages when selectedUser changes
+    // Add a small delay to ensure DOM is updated
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: "smooth",
+          block: "end",
+          inline: "nearest"
+        });
+      }
+    };
+    
+    // Scroll immediately and after a short delay to ensure reliability
+    scrollToBottom();
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [currentConversationMessages.length, selectedUser?._id]) // Trigger on length change and user change
+    // Fetch messages when selectedUser changes
   useEffect(() => {
     if (selectedUser?._id) {
       console.log('👤 Selected user changed, fetching messages for:', selectedUser.name);
       fetchMessages()
     }
-  }, [selectedUser?._id, fetchMessages])
-  
-  // Mark messages as read after they are fetched and loaded
+  }, [selectedUser?._id])
+  // Mark messages as read when opening a conversation
   useEffect(() => {
-    if (selectedUser?._id && messages.length > 0 && !fetchingMessages && markAsRead) {
+    if (selectedUser?._id && currentConversationMessages.length > 0 && !fetchingMessages && markAsRead) {
       // Check how many unread messages we have before marking as read
-      const unreadMessages = messages.filter(msg => 
+      const unreadMessages = currentConversationMessages.filter(msg => 
         msg.sender === selectedUser._id && 
         msg.reciver === userData?._id && 
         !msg.read
@@ -211,17 +253,20 @@ function MessageArea({ socketData, messageHandlerRef }) {
       if (unreadMessages.length > 0) {
         console.log(`📖 [MESSAGE AREA] Marking ${unreadMessages.length} messages as read for user:`, selectedUser._id);
         
-        // Mark messages as read via socket
-        markAsRead(selectedUser._id)
-        // Also mark messages as read in local state
-        dispatch(markMessagesAsRead({ senderId: selectedUser._id }))
+        // Mark messages as read via socket (for real-time updates)
+        if (markAsRead) {
+          markAsRead(selectedUser._id);
+        }
+        
+        // Also mark messages as read in local state immediately (for instant UI update)
+        dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
         
         console.log(`✅ [MESSAGE AREA] Messages marked as read for user:`, selectedUser._id);
       } else {
         console.log(`ℹ️ [MESSAGE AREA] No unread messages to mark for user:`, selectedUser._id);
       }
     }
-  }, [selectedUser?._id, messages.length, fetchingMessages, markAsRead, dispatch])
+  }, [selectedUser?._id, currentConversationMessages, fetchingMessages, markAsRead, dispatch]) // Added currentConversationMessages to trigger on any message change
   
   // Typing indicator timer
   useEffect(() => {
@@ -392,11 +437,11 @@ function MessageArea({ socketData, messageHandlerRef }) {
                   > 
                     <IoArrowBack className='w-6 h-6 text-pastel-rose dark:text-[#39ff14] group-hover:text-pastel-plum dark:group-hover:text-white transition-colors' />
                   </button>
-                  <div className='relative'>
-                    <img 
+                  <div className='relative'>                    <img 
                       src={selectedUser?.image || dp} 
                       alt="Profile" 
                       className='w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-pastel-rose dark:border-[#39ff14] shadow-lg cursor-pointer hover:scale-105 transition-transform' 
+                      onContextMenu={(e) => e.preventDefault()} // Prevent right-click download
                     />
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 dark:bg-[#39ff14] rounded-full border-2 border-white dark:border-[#23234a] animate-pulse"></div>
                   </div>
@@ -449,20 +494,21 @@ function MessageArea({ socketData, messageHandlerRef }) {
                   {isConnected ? 'Connected' : 'Reconnecting...'}
                 </span>
               </div>
-              
-              {/* Typing Indicator */}
-              {typingUsers?.includes(selectedUser?._id) && (
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
-                  <span className="text-pastel-muted dark:text-[#b3b3ff] font-mono text-xs">
-                    {selectedUser?.userName} is typing...
-                  </span>
-                </div>
-              )}
+                {/* Typing Indicator - Fixed for mobile stability */}
+              <div className={`flex items-center gap-2 transition-opacity duration-200 ${typingUsers?.includes(selectedUser?._id) ? 'opacity-100' : 'opacity-0'}`} style={{minHeight: isMobile ? '20px' : '16px'}}>
+                {typingUsers?.includes(selectedUser?._id) && (
+                  <>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-pulse" style={{animationDelay: '0.3s'}}></div>
+                      <div className="w-2 h-2 bg-pastel-rose dark:bg-[#39ff14] rounded-full animate-pulse" style={{animationDelay: '0.6s'}}></div>
+                    </div>
+                    <span className="text-pastel-muted dark:text-[#b3b3ff] font-mono text-xs">
+                      {selectedUser?.userName} is typing...
+                    </span>
+                  </>
+                )}
+              </div>
               
               {/* Last seen */}
               <div className="flex items-center gap-2">
@@ -482,7 +528,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     <p className="text-pastel-muted dark:text-[#39ff14] font-mono mt-4 text-center">Loading chat history...</p>
                   </div>
                 </div>
-              ) : messages.length === 0 ? (
+              ) : currentConversationMessages.length === 0 ? (
                 <div className='flex items-center justify-center h-full'>
                   <div className="text-center">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-pastel-cream dark:bg-[#23234a] rounded-full flex items-center justify-center mb-6 mx-auto border-2 border-pastel-rose dark:border-[#39ff14]/30 shadow-lg">
@@ -492,15 +538,13 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     <p className='text-pastel-muted dark:text-[#b3b3ff] font-mono text-sm sm:text-base'>Send your first message to begin collaboration</p>
                     <div className="mt-6 text-pastel-rose dark:text-[#39ff14] font-mono text-xs sm:text-sm opacity-60">// No messages in buffer</div>
                   </div>
-                </div>
-              ) : (
-                messages.map((msg, index) => (
+                </div>              ) : (
+                currentConversationMessages.map((msg, index) => (
                   <div key={msg._id || index} className={`flex ${msg.sender === userData._id ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[90vw] sm:max-w-[75%] ${msg.sender === userData._id ? 'order-2' : 'order-1'}`}>
                       <div className={`p-3 sm:p-4 rounded-2xl font-mono relative ${msg.sender === userData._id ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/20' : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white border border-pastel-border dark:border-[#39ff14]/20 shadow-lg'} ${msg.sender === userData._id ? 'rounded-br-md' : 'rounded-bl-md'}`}>
-                        {/* Message content */}
-                        {msg.image && (
-                          <img src={msg.image} alt="attachment" className='max-w-full rounded-lg mb-3 border border-[#39ff14]/30' />
+                        {/* Message content */}                        {msg.image && (
+                          <img src={msg.image} alt="attachment" className='max-w-full rounded-lg mb-3 border border-[#39ff14]/30' onContextMenu={(e) => e.preventDefault()} />
                         )}
                         
                         {/* Message type header */}

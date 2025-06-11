@@ -83,21 +83,27 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
             setIsLoadingUsers(false)
         }
     }
-
-      // Calculate unread messages for each user
+    // Calculate unread messages for each user
     const getUserUnreadCount = (userId) => {
         // Always show unread count if there are unread messages in Redux state
-        const unreadCount = messages?.filter(msg => 
+        const unreadMessages = messages?.filter(msg => 
             msg.sender === userId && 
             msg.reciver === userData?._id && 
             !msg.read
-        ).length || 0;
+        ) || [];
         
-        // Debug logging for unread count calculation
-        if (selectedUser?._id === userId && unreadCount > 0) {
-            console.log(`🔢 [SIDEBAR] Unread count for ${userId}:`, unreadCount, 'messages:', 
-                messages?.filter(msg => msg.sender === userId && msg.reciver === userData?._id)
-                    .map(m => ({ id: m._id, read: m.read, message: m.message?.substring(0, 20) }))
+        const unreadCount = unreadMessages.length;
+        
+        // Enhanced debug logging
+        if (unreadCount > 0) {
+            console.log(`🔢 [SIDEBAR] User ${userId} has ${unreadCount} unread messages:`, 
+                unreadMessages.map(m => ({ 
+                    id: m._id, 
+                    read: m.read, 
+                    message: m.message?.substring(0, 20),
+                    sender: m.sender,
+                    reciver: m.reciver
+                }))
             );
         }
         
@@ -169,7 +175,7 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
             {/* Header */}
             <div className="p-6 pb-3 rounded-b-3xl shadow-md bg-gradient-to-r from-pastel-cream via-pastel-lavender to-pastel-peach dark:from-[#23234a] dark:via-[#181c2f] dark:to-[#23234a] border-b border-pastel-rose dark:border-[#39ff14]/30">
                 <div className="flex items-center gap-4">
-                    <img src={userData?.image || dp} alt="Profile" className="w-16 h-16 rounded-2xl border-4 border-pastel-rose dark:border-[#39ff14] shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform" onClick={() => navigate('/profile')} />
+                    <img src={userData?.image || dp} alt="Profile" className="w-16 h-16 rounded-2xl border-4 border-pastel-rose dark:border-[#39ff14] shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform" onClick={() => navigate('/profile')} onContextMenu={(e) => e.preventDefault()} />
                     <div>                        <h1 className="text-pastel-plum dark:text-white font-extrabold text-2xl font-mono tracking-tight">Alpha<span className="text-pastel-rose dark:text-[#39ff14]">Chat</span></h1>
                         <p className="text-xs text-pastel-muted dark:text-[#b3b3ff] font-mono">v2.0.0 // Coder Edition</p>
                         <p className="text-pastel-rose dark:text-[#39ff14] font-mono text-sm mt-1">{userData?.name || userData?.userName || 'Developer'}</p>
@@ -314,6 +320,7 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                                         src={user.image || dp} 
                                         alt="Profile" 
                                         className="w-12 h-12 rounded-xl object-cover border-2 border-pastel-rose dark:border-[#39ff14]/30"
+                                        onContextMenu={(e) => e.preventDefault()} // Prevent right-click download
                                     />
                                     {/* Online indicator */}
                                     <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#181c2f] ${
