@@ -346,16 +346,14 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                         );
                     })
                 )}
-            </div>{/* Bottom Action Bar */}
-            <div className="sticky bottom-0 left-0 w-full z-30 bg-pastel-peach dark:bg-[#23234a] border-t border-pastel-rose dark:border-[#39ff14]/30 p-2 flex flex-col gap-1">
+            </div>            {/* Bottom Action Bar */}
+            <div className="sticky bottom-0 left-0 w-full z-30 bg-pastel-peach dark:bg-[#23234a] border-t border-pastel-rose dark:border-[#39ff14]/30 p-2">
                 <div className="flex items-center justify-between gap-2">
                     <button className="flex items-center gap-1 text-pastel-purple dark:text-[#b3b3ff] hover:text-pastel-plum dark:hover:text-white transition-colors p-2 rounded-lg hover:bg-pastel-peach dark:hover:bg-[#181c2f]" onClick={() => navigate('/profile')}>
                         <FiSettings className="w-4 h-4" />
                         <span className="text-xs hidden sm:inline">Settings</span>
                     </button>
-                    <div className="hidden sm:block">
-                        <ThemeToggle />
-                    </div>
+                    <ThemeToggle />
                     <button 
                         onClick={handelLogoout}
                         className="flex items-center gap-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20"
@@ -363,10 +361,6 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                         <BiLogOut className="w-4 h-4" />
                         <span className="text-xs">Logout</span>
                     </button>
-                </div>
-                {/* Mobile Theme Toggle */}
-                <div className="sm:hidden flex justify-center">
-                    <ThemeToggle />
                 </div>
             </div>
         </div>
