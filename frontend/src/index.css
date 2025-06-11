@@ -140,3 +140,50 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #2d1e60 #181c2f;
 }
+
+/* WhatsApp-like animations for unread messages */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.01);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* Smooth scrolling for message container */
+.messages-container {
+  scroll-behavior: smooth;
+}
+
+/* Unread message highlight */
+.unread-message {
+  position: relative;
+}
+
+.unread-message::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #ff4444;
+  border-radius: 2px;
+}
+
+/* Scroll to bottom button animation */
+.scroll-to-bottom {
+  transition: all 0.3s ease;
+}
+
+.scroll-to-bottom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

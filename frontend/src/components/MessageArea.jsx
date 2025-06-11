@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { IoArrowBack, IoSend } from "react-icons/io5";
-import { FiMonitor, FiTerminal, FiCode } from "react-icons/fi";
+import { FiMonitor, FiTerminal, FiCode, FiChevronDown } from "react-icons/fi";
 import dp from '../assets/pp.webp'
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedUser, setMessages, addMessage, markMessagesAsRead } from '../redux/userSlice';
@@ -213,26 +213,124 @@ function MessageArea({ socketData, messageHandlerRef }) {
     } finally {
       setFetchingMessages(false)
     }
-  }, [selectedUser?._id, dispatch, userData?._id]) // Removed messages dependency
-  // Auto-scroll to bottom when current conversation messages change or new message added
+  }, [selectedUser?._id, dispatch, userData?._id]) // Removed messages dependency  // WhatsApp-like smart scroll behavior
+  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const messagesContainerRef = useRef(null);
+
+  // Check if user is at bottom of chat
+  const checkIfAtBottom = useCallback(() => {
+    if (!messagesContainerRef.current) return false;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
+    
+    setIsUserAtBottom(isAtBottom);
+    setShowScrollToBottom(!isAtBottom && currentConversationMessages.length > 0);
+    
+    return isAtBottom;
+  }, [currentConversationMessages.length]);
+
+  // Handle scroll events
   useEffect(() => {
-    // Add a small delay to ensure DOM is updated
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ 
-          behavior: "smooth",
-          block: "end",
-          inline: "nearest"
-        });
-      }
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      checkIfAtBottom();
     };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [checkIfAtBottom]);
+
+  // Smart auto-scroll logic (WhatsApp behavior)
+  useEffect(() => {
+    if (currentConversationMessages.length === 0) return;
+
+    const lastMessage = currentConversationMessages[currentConversationMessages.length - 1];
+    const isMyMessage = lastMessage?.sender === userData?._id;
     
-    // Scroll immediately and after a short delay to ensure reliability
-    scrollToBottom();
-    const timeoutId = setTimeout(scrollToBottom, 100);
+    // Count unread messages
+    const unreadCount = currentConversationMessages.filter(msg => 
+      msg.sender === selectedUser?._id && 
+      msg.reciver === userData?._id && 
+      !msg.read
+    ).length;
     
-    return () => clearTimeout(timeoutId);
-  }, [currentConversationMessages.length, selectedUser?._id]) // Trigger on length change and user change
+    setUnreadMessageCount(unreadCount);
+
+    // WhatsApp-like scroll behavior:
+    // 1. Always scroll for my own messages
+    // 2. Only scroll for others' messages if user is already at bottom
+    // 3. If there are unread messages and user not at bottom, scroll to first unread
+    
+    if (isMyMessage || isUserAtBottom) {
+      // Scroll to bottom for my messages or if user is already at bottom
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: "smooth",
+            block: "end"
+          });
+        }
+      }, 100);
+    } else if (unreadCount > 0 && !isUserAtBottom) {
+      // Find first unread message and scroll to it
+      const firstUnreadMessage = currentConversationMessages.find(msg => 
+        msg.sender === selectedUser?._id && 
+        msg.reciver === userData?._id && 
+        !msg.read
+      );
+      
+      if (firstUnreadMessage) {
+        setTimeout(() => {
+          const messageElement = document.querySelector(`[data-message-id="${firstUnreadMessage._id}"]`);
+          if (messageElement) {
+            messageElement.scrollIntoView({ 
+              behavior: "smooth",
+              block: "start"
+            });
+          }
+        }, 100);
+      }
+    }
+  }, [currentConversationMessages.length, selectedUser?._id, userData?._id, isUserAtBottom]);
+
+  // Initial scroll when switching users
+  useEffect(() => {
+    if (selectedUser?._id) {
+      // Always scroll to bottom when switching users
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: "instant",
+            block: "end"
+          });
+        }
+        setIsUserAtBottom(true);
+        setShowScrollToBottom(false);
+      }, 200);
+    }
+  }, [selectedUser?._id]);
+
+  // Scroll to bottom function for the button
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end"
+      });
+    }
+    setShowScrollToBottom(false);
+    setIsUserAtBottom(true);
+    
+    // Mark messages as read when manually scrolling to bottom
+    if (unreadMessageCount > 0) {
+      dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+    }
+  };
     // Fetch messages when selectedUser changes
   useEffect(() => {
     if (selectedUser?._id) {
@@ -518,9 +616,12 @@ function MessageArea({ socketData, messageHandlerRef }) {
                 </span>
               </div>
             </div>
-            
-            {/* Messages Area */}
-            <div className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4`} style={{paddingBottom: isMobile ? (inputFocused ? '20px' : '120px') : '180px'}}>
+              {/* Messages Area */}
+            <div 
+              ref={messagesContainerRef}
+              className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4 relative`} 
+              style={{paddingBottom: isMobile ? (inputFocused ? '20px' : '120px') : '180px'}}
+            >
               {fetchingMessages ? (
                 <div className='flex items-center justify-center h-full'>
                   <div className="bg-pastel-cream dark:bg-[#23234a] rounded-xl p-8 border border-pastel-rose dark:border-[#39ff14]/30 shadow-lg">
@@ -539,10 +640,18 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     <div className="mt-6 text-pastel-rose dark:text-[#39ff14] font-mono text-xs sm:text-sm opacity-60">// No messages in buffer</div>
                   </div>
                 </div>              ) : (
-                currentConversationMessages.map((msg, index) => (
-                  <div key={msg._id || index} className={`flex ${msg.sender === userData._id ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[90vw] sm:max-w-[75%] ${msg.sender === userData._id ? 'order-2' : 'order-1'}`}>
-                      <div className={`p-3 sm:p-4 rounded-2xl font-mono relative ${msg.sender === userData._id ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/20' : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white border border-pastel-border dark:border-[#39ff14]/20 shadow-lg'} ${msg.sender === userData._id ? 'rounded-br-md' : 'rounded-bl-md'}`}>
+                currentConversationMessages.map((msg, index) => {
+                  const isUnread = msg.sender === selectedUser?._id && msg.reciver === userData?._id && !msg.read;
+                  
+                  return (
+                  <div 
+                    key={msg._id || index} 
+                    data-message-id={msg._id}
+                    className={`flex ${msg.sender === userData._id ? 'justify-end' : 'justify-start'} ${
+                      isUnread ? 'animate-pulse-subtle' : ''
+                    }`}
+                  >                    <div className={`max-w-[90vw] sm:max-w-[75%] ${msg.sender === userData._id ? 'order-2' : 'order-1'} ${isUnread ? 'unread-message' : ''}`}>
+                      <div className={`p-3 sm:p-4 rounded-2xl font-mono relative ${msg.sender === userData._id ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/20' : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white border border-pastel-border dark:border-[#39ff14]/20 shadow-lg'} ${msg.sender === userData._id ? 'rounded-br-md' : 'rounded-bl-md'} ${isUnread ? 'ring-2 ring-red-400 ring-opacity-50' : ''}`}>
                         {/* Message content */}                        {msg.image && (
                           <img src={msg.image} alt="attachment" className='max-w-full rounded-lg mb-3 border border-[#39ff14]/30' onContextMenu={(e) => e.preventDefault()} />
                         )}
@@ -610,11 +719,36 @@ function MessageArea({ socketData, messageHandlerRef }) {
                         {/* Message type indicator */}
                         <div className={`absolute -bottom-1 ${msg.sender === userData._id ? '-right-1' : '-left-1'} w-3 h-3 transform rotate-45 ${msg.sender === userData._id ? 'bg-pastel-coral dark:bg-[#39ff14]' : 'bg-pastel-cream dark:bg-[#23234a] border-r border-b border-pastel-border dark:border-[#39ff14]/20'}`}></div>
                       </div>
-                    </div>
-                  </div>
-                ))
+                    </div>                  </div>
+                );
+                })
               )}
               <div ref={messagesEndRef} />
+              
+              {/* WhatsApp-like scroll to bottom button with unread count */}
+              {showScrollToBottom && (
+                <div className="absolute bottom-20 right-4 z-10">                  <button
+                    onClick={scrollToBottom}
+                    className="scroll-to-bottom bg-pastel-rose dark:bg-[#39ff14] text-white dark:text-[#181c2f] rounded-full p-3 shadow-lg hover:scale-110 transition-all duration-200 flex items-center gap-2"
+                  >
+                    <FiChevronDown className="w-5 h-5" />
+                    {unreadMessageCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {unreadMessageCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
+              
+              {/* Unread messages indicator */}
+              {unreadMessageCount > 0 && !showScrollToBottom && (
+                <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-mono shadow-lg">
+                    {unreadMessageCount} unread message{unreadMessageCount > 1 ? 's' : ''}
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Terminal-style Message Input */}
