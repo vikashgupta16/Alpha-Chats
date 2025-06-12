@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Layout Test - Alpha Chats</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f0f2f5;
+        }
+        .test-container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-header {
+            background: #075e54;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .name-test {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #25d366;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .name-container {
+            flex: 1;
+            min-width: 0; /* Important for text truncation */
+        }
+        .name-text {
+            font-weight: 500;
+            color: #111;
+            /* OLD BEHAVIOR - with artificial constraints */
+        }
+        .name-text.old {
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .name-text.new {
+            /* NEW BEHAVIOR - let it use available space */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .status {
+            font-size: 12px;
+            color: #667781;
+        }
+        .test-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #075e54;
+            margin-bottom: 8px;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .before, .after {
+            padding: 12px;
+            border-radius: 6px;
+        }
+        .before {
+            background: #ffebee;
+            border: 1px solid #f44336;
+        }
+        .after {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+        }
+        @media (max-width: 640px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+            .test-container {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>📱 Mobile Layout Test Results</h1>
+        <p>Testing the fixes for name truncation and mobile layout issues</p>
+    </div>
+
+    <div class="test-container">
+        <div class="test-section">
+            <div class="test-label">✅ Issue Fixed: Name Truncation</div>
+            <div class="comparison">
+                <div class="before">
+                    <strong>Before (❌ Problem):</strong>
+                    <div class="name-test">
+                        <div class="avatar">JD</div>
+                        <div class="name-container">
+                            <div class="name-text old">John Christopher Alexander Smith</div>
+                            <div class="status">Online</div>
+                        </div>
+                    </div>
+                    <small>Name artificially constrained to 120px causing unnecessary ellipsis</small>
+                </div>
+                <div class="after">
+                    <strong>After (✅ Fixed):</strong>
+                    <div class="name-test">
+                        <div class="avatar">JD</div>
+                        <div class="name-container">
+                            <div class="name-text new">John Christopher Alexander Smith</div>
+                            <div class="status">Online</div>
+                        </div>
+                    </div>
+                    <small>Name uses available space efficiently, less truncation</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-label">🚀 Performance Optimizations Applied</div>
+            <ul>
+                <li><strong>React.memo</strong> - Components only re-render when props change</li>
+                <li><strong>useCallback</strong> - Event handlers are memoized</li>
+                <li><strong>useMemo</strong> - Expensive calculations are cached</li>
+                <li><strong>Debounced resize</strong> - Window resize events are optimized</li>
+                <li><strong>Mobile detection</strong> - Proper device detection vs simple width check</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-label">📐 Layout Improvements</div>
+            <ul>
+                <li><strong>MessageArea Header:</strong> Removed max-w-[120px] constraint on mobile</li>
+                <li><strong>SideBar Users:</strong> Better flex layout with overflow handling</li>
+                <li><strong>Responsive Text:</strong> text-base on mobile vs text-sm on desktop</li>
+                <li><strong>CSS Optimizations:</strong> Mobile-specific text rendering and scrolling</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-label">🔧 Mobile Utilities Created</div>
+            <ul>
+                <li><strong>isMobileDevice():</strong> Detects mobile devices properly</li>
+                <li><strong>debounce():</strong> Optimizes frequent function calls</li>
+                <li><strong>throttle():</strong> Limits function execution rate</li>
+                <li><strong>optimizeForMobile():</strong> Applies mobile-specific optimizations</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-label">📱 Test Instructions</div>
+            <ol>
+                <li>Open the main app at <a href="http://localhost:5174" target="_blank">http://localhost:5174</a></li>
+                <li>Test on different screen sizes (resize browser window)</li>
+                <li>Check mobile device view (F12 → Device emulation)</li>
+                <li>Verify names are no longer unnecessarily truncated</li>
+                <li>Check smooth scrolling and responsive behavior</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Simple mobile detection test
+        function runMobileTest() {
+            const isMobile = window.innerWidth < 640 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const screenInfo = {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                isMobile: isMobile,
+                userAgent: navigator.userAgent.substring(0, 50) + '...'
+            };
+            
+            console.log('📱 Mobile Test Results:', screenInfo);
+            
+            // Create a test results display
+            const testSection = document.createElement('div');
+            testSection.className = 'test-section';
+            testSection.innerHTML = `
+                <div class="test-label">📊 Current Device Info</div>
+                <ul>
+                    <li><strong>Screen Width:</strong> ${screenInfo.width}px</li>
+                    <li><strong>Screen Height:</strong> ${screenInfo.height}px</li>
+                    <li><strong>Detected as Mobile:</strong> ${screenInfo.isMobile ? 'Yes ✅' : 'No 🖥️'}</li>
+                    <li><strong>User Agent:</strong> ${screenInfo.userAgent}</li>
+                </ul>
+            `;
+            
+            document.querySelector('.test-container').appendChild(testSection);
+        }
+        
+        // Run test when page loads
+        window.addEventListener('load', runMobileTest);
+        
+        // Update on resize
+        window.addEventListener('resize', () => {
+            setTimeout(runMobileTest, 100);
+        });
+    </script>
+</body>
+</html>

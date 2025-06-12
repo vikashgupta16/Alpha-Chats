@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import dp from '../assets/pp.webp'
 import { MdOutlinePersonSearch } from "react-icons/md";
@@ -10,6 +10,7 @@ import { serverUrl } from '../config/constants';
 import { setSelectedUser, setOtherUsers, setUserData } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './ThemeContext';
+import { debounce, isMobileDevice } from '../utils/mobileOptimizations';
 
 function SideBar({ onlineUsers = [], isConnected = false }) {
     let {userData,otherUsers,selectedUser,messages} = useSelector(state => state.user)
@@ -83,8 +84,8 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
             setIsLoadingUsers(false)
         }
     }
-    // Calculate unread messages for each user
-    const getUserUnreadCount = (userId) => {
+    // Calculate unread messages for each user - Memoized for performance
+    const getUserUnreadCount = useCallback((userId) => {
         // Always show unread count if there are unread messages in Redux state
         const unreadMessages = messages?.filter(msg => 
             msg.sender === userId && 
@@ -94,8 +95,8 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
         
         const unreadCount = unreadMessages.length;
         
-        // Enhanced debug logging
-        if (unreadCount > 0) {
+        // Enhanced debug logging (only in development)
+        if (unreadCount > 0 && import.meta.env.DEV) {
             console.log(`🔢 [SIDEBAR] User ${userId} has ${unreadCount} unread messages:`, 
                 unreadMessages.map(m => ({ 
                     id: m._id, 
@@ -108,29 +109,38 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
         }
         
         return unreadCount;
-    };
-      // Get total unread messages
-    const totalUnread = React.useMemo(() => {
+    }, [messages, userData?._id]);
+
+    // Get total unread messages - Optimized with useMemo
+    const totalUnread = useMemo(() => {
         const total = otherUsers?.reduce((total, user) => {
             return total + getUserUnreadCount(user._id);
         }, 0) || 0;
         
-        console.log(`📊 [SIDEBAR] Total unread messages calculated:`, total);
+        if (import.meta.env.DEV) {
+            console.log(`📊 [SIDEBAR] Total unread messages calculated:`, total);
+        }
         return total;
-    }, [otherUsers, messages, userData?._id]);
+    }, [otherUsers, getUserUnreadCount]);
     
-    // Check if user is online
-    const isUserOnline = (userId) => {
+    // Check if user is online - Memoized for performance
+    const isUserOnline = useCallback((userId) => {
         return onlineUsers.includes(userId);
-    };
+    }, [onlineUsers]);
     
-    // Count online users
-    const onlineCount = otherUsers?.filter(user => isUserOnline(user._id)).length || 0;
+    // Count online users - Optimized with useMemo
+    const onlineCount = useMemo(() => {
+        return otherUsers?.filter(user => isUserOnline(user._id)).length || 0;
+    }, [otherUsers, isUserOnline]);
     
-    const filteredUsers = otherUsers?.filter(user => 
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.userName?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // Filtered users - Optimized with useMemo
+    const filteredUsers = useMemo(() => {
+        if (!searchTerm) return otherUsers;
+        return otherUsers?.filter(user => 
+            user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.userName?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [otherUsers, searchTerm]);
     
     const handleSearch = (e) => {
         e.preventDefault()
@@ -156,15 +166,22 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
         navigate("/login")      } catch (error) {
         console.error("Error logging out:", error)
       }
-    }
-
-    // Responsive: detect mobile
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+    }    // Responsive: detect mobile with optimization
+    const [isMobile, setIsMobile] = useState(() => isMobileDevice() || window.innerWidth < 640);
+    
+    // Debounced resize handler for better performance
+    const debouncedHandleResize = useMemo(
+        () => debounce(() => {
+            const newIsMobile = isMobileDevice() || window.innerWidth < 640;
+            setIsMobile(newIsMobile);
+        }, 150),
+        []
+    );
+    
     React.useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 640);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+        window.addEventListener('resize', debouncedHandleResize);
+        return () => window.removeEventListener('resize', debouncedHandleResize);
+    }, [debouncedHandleResize]);
 
     // On mobile, if a user is selected, hide the sidebar (show only chat)
     if (isMobile && selectedUser) return null;    return (
@@ -326,16 +343,28 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                                     <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#181c2f] ${
                                         userIsOnline ? 'bg-pastel-mint dark:bg-[#39ff14] animate-pulse' : 'bg-pastel-muted'
                                     }`}></div>
-                                </div>
-                                <div className="flex-1 min-w-0">                                <div className="flex items-center gap-2">
-                                        <h3 className="text-pastel-plum dark:text-white font-semibold font-mono truncate">
+                                </div>                                <div className="flex-1 overflow-hidden">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className={`text-pastel-plum dark:text-white font-semibold font-mono flex-1 ${isMobile ? 'text-base' : 'text-sm'}`} 
+                                            style={{ 
+                                                whiteSpace: 'nowrap', 
+                                                overflow: 'hidden', 
+                                                textOverflow: 'ellipsis',
+                                                maxWidth: isMobile ? 'calc(100% - 30px)' : '100%'
+                                            }}>
                                             {user.name || user.userName}
                                         </h3>
                                         {userIsOnline && (
-                                            <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono">●</span>
+                                            <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono flex-shrink-0">●</span>
                                         )}
                                     </div>
-                                    <p className="text-pastel-muted dark:text-[#b3b3ff] text-sm font-mono truncate">
+                                    <p className={`text-pastel-muted dark:text-[#b3b3ff] font-mono ${isMobile ? 'text-sm' : 'text-xs'}`}
+                                       style={{ 
+                                           whiteSpace: 'nowrap', 
+                                           overflow: 'hidden', 
+                                           textOverflow: 'ellipsis',
+                                           maxWidth: '100%'
+                                       }}>
                                         @{user.github || user.userName}
                                     </p>
                                     <div className="flex items-center justify-between mt-1">
@@ -343,7 +372,7 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                                             {userIsOnline ? 'Online' : 'Offline'}
                                         </p>
                                         {unreadCount > 0 && (
-                                            <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono">
+                                            <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono flex-shrink-0">
                                                 {unreadCount} new
                                             </span>
                                         )}

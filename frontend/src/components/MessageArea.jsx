@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { IoArrowBack, IoSend } from "react-icons/io5";
 import { FiMonitor, FiTerminal, FiCode, FiChevronDown } from "react-icons/fi";
 import dp from '../assets/pp.webp'
@@ -11,6 +11,7 @@ import { useTheme } from './ThemeContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { formatLastSeen } from '../utils/dateUtils';
+import { debounce, isMobileDevice, optimizeForMobile } from '../utils/mobileOptimizations';
 
 function MessageArea({ socketData, messageHandlerRef }) {
   const { theme } = useTheme();
@@ -21,38 +22,44 @@ function MessageArea({ socketData, messageHandlerRef }) {
   const [fetchingMessages, setFetchingMessages] = useState(false)
   const [inputMode, setInputMode] = useState('text'); // 'text', 'code', 'terminal'
   const [codeLang, setCodeLang] = useState('javascript');
-  
-  // Mobile responsive states
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+    // Mobile detection with optimization
+  const [isMobile, setIsMobile] = useState(() => isMobileDevice() || window.innerWidth < 640);
   const [inputFocused, setInputFocused] = useState(false);
   const inputRef = useRef(null);
-  
-  // Debug inputMode changes
-  useEffect(() => {
-    console.log('🔄 Input mode changed to:', inputMode);
-  }, [inputMode]);
-  
   const messagesEndRef = useRef(null)
   const selectedUserRef = useRef(selectedUser)
   const startTypingRef = useRef()
   const stopTypingRef = useRef()
   const messagesRef = useRef(messages)
   
-  // Keep refs updated
+  // Debug inputMode changes
   useEffect(() => {
-    selectedUserRef.current = selectedUser
-  }, [selectedUser])
+    if (import.meta.env.DEV) {
+      console.log('🔄 Input mode changed to:', inputMode);
+    }
+  }, [inputMode]);
   
+  // Debounced resize handler for better performance
+  const debouncedHandleResize = useMemo(
+    () => debounce(() => {
+      const newIsMobile = isMobileDevice() || window.innerWidth < 640;
+      setIsMobile(newIsMobile);
+    }, 100),
+    []
+  );
+
+  // Mobile detection with performance optimization
   useEffect(() => {
-    messagesRef.current = messages
-  }, [messages])
-  
-  // Mobile detection
+    window.addEventListener('resize', debouncedHandleResize);
+    return () => window.removeEventListener('resize', debouncedHandleResize);
+  }, [debouncedHandleResize]);
+
+  // Initialize mobile optimizations
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    if (isMobile) {
+      optimizeForMobile();
+    }
+  }, [isMobile]);
 
   // Handle input focus for mobile keyboard behavior
   useEffect(() => {
@@ -137,31 +144,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
     
     dispatch(addMessage(transformedMessage));
     console.log('✅ [SOCKET] Added relevant message to current conversation');
-  }, [dispatch, userData?._id, fetchingMessages])
-    // Filter messages for current conversation (WhatsApp-like behavior)
-  const currentConversationMessages = React.useMemo(() => {
-    if (!selectedUser?._id || !userData?._id) return [];
-    
-    const filtered = messages.filter(msg => 
-      (msg.sender === selectedUser._id && msg.reciver === userData._id) ||
-      (msg.sender === userData._id && msg.reciver === selectedUser._id)
-    );
-    
-    // Sort by timestamp to ensure proper ordering
-    const sorted = filtered.sort((a, b) => new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp));
-    
-    console.log(`💬 [CONVERSATION] Filtered ${sorted.length} messages for conversation with ${selectedUser.name || selectedUser._id}`);
-    return sorted;
-  }, [messages, selectedUser?._id, userData?._id]);
-
-  // Set the message handler ref so Home component can use it
-  useEffect(() => {
-    if (messageHandlerRef) {
-      messageHandlerRef.current = handleNewMessage
-    }
-  }, [handleNewMessage, messageHandlerRef])
-  
-  // Extract socket functions from props
+  }, [dispatch, userData?._id, fetchingMessages])  // Extract socket functions from props first
   const { 
     sendMessage: sendSocketMessage, 
     startTyping, 
@@ -171,6 +154,36 @@ function MessageArea({ socketData, messageHandlerRef }) {
     typingUsers,
     markAsRead 
   } = socketData || {}
+
+  // Memoize expensive message filtering and sorting
+  const currentConversationMessages = useMemo(() => {
+    if (!selectedUser?._id || !userData?._id) return [];
+    
+    const filtered = messages?.filter(msg => 
+      (msg.sender === selectedUser._id && msg.reciver === userData._id) ||
+      (msg.sender === userData._id && msg.reciver === selectedUser._id)
+    ) || [];
+    
+    const sorted = filtered.sort((a, b) => 
+      new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp)
+    );
+    
+    if (import.meta.env.DEV) {
+      console.log(`💬 [CONVERSATION] Filtered ${sorted.length} messages for conversation with ${selectedUser.name || selectedUser._id}`);
+    }
+    return sorted;
+  }, [messages, selectedUser?._id, userData?._id]);
+
+  // Optimize typing indicator check
+  const isUserTyping = useMemo(() => {
+    return typingUsers?.includes(selectedUser?._id) || false;
+  }, [typingUsers, selectedUser?._id]);
+  // Set the message handler ref so Home component can use it
+  useEffect(() => {
+    if (messageHandlerRef) {
+      messageHandlerRef.current = handleNewMessage
+    }
+  }, [handleNewMessage, messageHandlerRef])
   
   // Keep typing function refs updated
   useEffect(() => {
@@ -525,14 +538,13 @@ function MessageArea({ socketData, messageHandlerRef }) {
       <div className="relative z-10 flex-1 flex flex-col h-full w-full max-w-full">
         {selectedUser ? (
           <>
-            {/* Terminal-style Header */}
-            <div className='w-full bg-gradient-to-r from-pastel-cream via-pastel-lavender to-pastel-peach dark:from-[#23234a] dark:via-[#2d1e60] dark:to-[#23234a] border-b border-pastel-rose dark:border-[#39ff14]/30 shadow-lg'>
-              <div className="flex flex-col sm:flex-row items-center justify-between p-2 sm:p-4 gap-2 sm:gap-0">
-                <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            {/* Terminal-style Header */}            <div className='w-full bg-gradient-to-r from-pastel-cream via-pastel-lavender to-pastel-peach dark:from-[#23234a] dark:via-[#2d1e60] dark:to-[#23234a] border-b border-pastel-rose dark:border-[#39ff14]/30 shadow-lg'>
+              <div className="flex items-center justify-between p-2 sm:p-4 gap-2 w-full">
+                <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                   <button 
-                    className='p-2 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/20 rounded-lg transition-all duration-200 group' 
+                    className='p-2 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/20 rounded-lg transition-all duration-200 group flex-shrink-0' 
                     onClick={() => dispatch(setSelectedUser(null))}
-                  > 
+                  >
                     <IoArrowBack className='w-6 h-6 text-pastel-rose dark:text-[#39ff14] group-hover:text-pastel-plum dark:group-hover:text-white transition-colors' />
                   </button>
                   <div className='relative'>                    <img 
@@ -542,12 +554,11 @@ function MessageArea({ socketData, messageHandlerRef }) {
                       onContextMenu={(e) => e.preventDefault()} // Prevent right-click download
                     />
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 dark:bg-[#39ff14] rounded-full border-2 border-white dark:border-[#23234a] animate-pulse"></div>
-                  </div>
-                  <div>
-                    <h1 className='text-pastel-plum dark:text-white font-bold text-lg sm:text-xl font-mono truncate max-w-[120px] sm:max-w-none'>
+                  </div>                  <div className="flex-1 min-w-0 mr-2">
+                    <h1 className='text-pastel-plum dark:text-white font-bold text-lg sm:text-xl font-mono truncate'>
                       {selectedUser?.name || selectedUser?.userName || "Anonymous"}
                     </h1>
-                    <p className='text-pastel-rose dark:text-[#39ff14] text-xs sm:text-sm font-mono truncate max-w-[120px] sm:max-w-none'>@{selectedUser?.github || selectedUser?.userName}</p>
+                    <p className='text-pastel-rose dark:text-[#39ff14] text-xs sm:text-sm font-mono truncate'>@{selectedUser?.github || selectedUser?.userName}</p>
                   </div>
                 </div>
                 {/* Terminal window controls - only show on desktop */}
