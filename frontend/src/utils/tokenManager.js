@@ -1,6 +1,6 @@
 // Token management utilities for better browser compatibility
 class TokenManager {
-    static TOKEN_KEY = 'alpha-chat-token';
+    static TOKEN_KEY = 'authToken'; // Use same key as AuthManager
     
     static setToken(token) {
         // Store in localStorage as fallback for browsers with cookie issues
@@ -11,11 +11,27 @@ class TokenManager {
     }
     
     static getToken() {
-        return localStorage.getItem(this.TOKEN_KEY);
+        // First try localStorage
+        let token = localStorage.getItem(this.TOKEN_KEY);
+        
+        // If not found, try cookies as backup
+        if (!token) {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'token' || name === 'authToken') {
+                    token = value;
+                    break;
+                }
+            }
+        }
+        
+        return token;
     }
-    
-    static removeToken() {
+      static removeToken() {
         localStorage.removeItem(this.TOKEN_KEY);
+        // Also clear old token key for compatibility
+        localStorage.removeItem('alpha-chat-token');
         console.log('🗑️ [TokenManager] Token removed from localStorage');
     }
     

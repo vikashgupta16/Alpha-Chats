@@ -171,3 +171,33 @@ export const uploadFiles = async (req, res) => {
         });
     }
 }
+
+// Mark messages as read
+export const markMessagesAsRead = async (req, res) => {
+    try {
+        const { senderId } = req.params;
+        const receiverId = req.userId; // Current user receiving the messages
+        
+        console.log(`📖 [markMessagesAsRead] Marking messages as read from sender ${senderId} to receiver ${receiverId}`);
+        
+        // Update all unread messages from senderId to current user
+        const result = await Message.updateMany(
+            { 
+                sender: senderId, 
+                reciver: receiverId, 
+                read: false 
+            },
+            { $set: { read: true } }
+        );
+        
+        console.log(`✅ [markMessagesAsRead] Marked ${result.modifiedCount} messages as read`);
+        
+        return res.status(200).json({
+            message: "Messages marked as read successfully",
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ [markMessagesAsRead] Error:', error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};

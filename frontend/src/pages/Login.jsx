@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { setUserData } from '../redux/userSlice';
 import { FaTerminal, FaCode } from 'react-icons/fa';
 import { useTheme } from '../components/ThemeContext';
-import TokenManager from '../utils/tokenManager';
+import { AuthManager } from '../utils/auth';
 
 function Login() {
   const { theme } = useTheme();
@@ -39,19 +39,17 @@ function Login() {
         if (!validateForm()) {
           return
         }
-          setLoading(true)
+          setLoading(true);
         try {
-          setError("")
+          setError("");
           let result = await axios.post(`${serverUrl}/api/auth/login`, {
             github: github.trim(),
             password
           }, { withCredentials: true })
            
-          // Store token in localStorage for browsers with cookie issues
-          if (result.data.token) {
-            TokenManager.setToken(result.data.token);
-            console.log('✅ [Login] Token stored in localStorage for fallback');
-          }
+          // Use AuthManager to properly store authentication data
+          AuthManager.setAuth(result.data, result.data.token);
+          console.log('✅ [Login] Authentication data stored successfully');
           
           dispatch(setUserData(result.data))
           navigate("/")

@@ -12,6 +12,8 @@ const isAuth = async (req, res, next) => {
         token = authHeader.substring(7);
         console.log('🔑 [isAuth] Using Authorization header token for', req.method, req.path);
       }
+    } else {
+      console.log('🍪 [isAuth] Using cookie token for', req.method, req.path);
     }
     
     if (!token) {
@@ -24,9 +26,7 @@ const isAuth = async (req, res, next) => {
     const verifToken = jwt.verify(token, process.env.JWT_SECRET);
     console.log('✅ [isAuth] Token verified for user:', verifToken.userId, 'accessing', req.method, req.path);
     req.userId = verifToken.userId;
-    next();
-  } catch (error) {
-    console.error('❌ [isAuth] Token verification failed:', error.message, 'for', req.method, req.path);
+    next();  } catch (error) {    console.error('❌ [isAuth] Token verification failed:', error.message, 'for', req.method, req.path);
     return res.status(401).json({ message: "Unauthorized" });
   }
 }

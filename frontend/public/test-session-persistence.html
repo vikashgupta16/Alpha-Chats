@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Persistence Test - Alpha Chats</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left-color: #f44336;
+        }
+        .warning {
+            border-left-color: #ff9800;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .warning { background: #ff9800; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Session Persistence Test - Alpha Chats</h1>
+    
+    <div class="test-section">
+        <h2>Current Authentication Status</h2>
+        <div id="authStatus"></div>
+        <button onclick="checkAuthStatus()">Check Auth Status</button>
+        <button onclick="clearAllAuth()">Clear All Auth Data</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Storage Analysis</h2>
+        <div id="storageInfo"></div>
+        <button onclick="analyzeStorage()">Analyze Storage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Session Validation Test</h2>
+        <div id="sessionValidation"></div>
+        <button onclick="testSessionValidation()">Test Session Validation</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Cookie Analysis</h2>
+        <div id="cookieAnalysis"></div>
+        <button onclick="analyzeCookies()">Analyze Cookies</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Auto-Refresh Test</h2>
+        <div id="refreshTest"></div>
+        <button onclick="startRefreshTest()">Start Refresh Test</button>
+        <button onclick="stopRefreshTest()">Stop Test</button>
+    </div>
+
+    <script>
+        const serverUrl = 'https://alpha-chats-backend.vercel.app'; // Update if needed
+        let refreshInterval = null;
+
+        // AuthManager equivalent for testing
+        const TestAuthManager = {
+            getTokenFromCookies: () => {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'token' || name === 'authToken') {
+                        return value;
+                    }
+                }
+                return null;
+            },
+
+            isAuthenticated: () => {
+                const token = localStorage.getItem('authToken');
+                const userData = localStorage.getItem('userData');
+                const sessionData = sessionStorage.getItem('userSession');
+                const cookieToken = TestAuthManager.getTokenFromCookies();
+                
+                return !!(token || userData || sessionData || cookieToken);
+            }
+        };
+
+        function updateStatus(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${content}</div>`;
+        }
+
+        function checkAuthStatus() {
+            const isAuth = TestAuthManager.isAuthenticated();
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            const sessionData = sessionStorage.getItem('userSession');
+            const cookieToken = TestAuthManager.getTokenFromCookies();
+
+            let status = `
+                <div class="status ${isAuth ? 'success' : 'error'}">
+                    Authentication Status: ${isAuth ? '✅ Authenticated' : '❌ Not Authenticated'}
+                </div>
+                <pre>
+LocalStorage Token: ${token ? '✅ Present' : '❌ Missing'}
+User Data: ${userData ? '✅ Present' : '❌ Missing'}
+Session Data: ${sessionData ? '✅ Present' : '❌ Missing'}
+Cookie Token: ${cookieToken ? '✅ Present' : '❌ Missing'}
+                </pre>
+            `;
+
+            updateStatus('authStatus', status);
+        }
+
+        function analyzeStorage() {
+            const localStorage_items = [];
+            const sessionStorage_items = [];
+            
+            // Analyze localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                localStorage_items.push(`${key}: ${localStorage.getItem(key)?.substring(0, 50)}...`);
+            }
+
+            // Analyze sessionStorage
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                sessionStorage_items.push(`${key}: ${sessionStorage.getItem(key)?.substring(0, 50)}...`);
+            }
+
+            const analysis = `
+                <h3>LocalStorage (${localStorage_items.length} items):</h3>
+                <pre>${localStorage_items.join('\n') || 'Empty'}</pre>
+                <h3>SessionStorage (${sessionStorage_items.length} items):</h3>
+                <pre>${sessionStorage_items.join('\n') || 'Empty'}</pre>
+            `;
+
+            updateStatus('storageInfo', analysis);
+        }
+
+        function analyzeCookies() {
+            const cookies = document.cookie.split(';').map(c => c.trim()).filter(c => c);
+            const analysis = `
+                <h3>Cookies (${cookies.length} items):</h3>
+                <pre>${cookies.join('\n') || 'No cookies found'}</pre>
+            `;
+            updateStatus('cookieAnalysis', analysis);
+        }
+
+        async function testSessionValidation() {
+            updateStatus('sessionValidation', '⏳ Testing session validation...', 'warning');
+            
+            try {
+                const token = localStorage.getItem('authToken') || TestAuthManager.getTokenFromCookies();
+                const config = {
+                    credentials: 'include',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                };
+
+                if (token && !TestAuthManager.getTokenFromCookies()) {
+                    config.headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`${serverUrl}/api/user/current`, config);
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    updateStatus('sessionValidation', `✅ Session validation successful: ${userData.userName}`, 'success');
+                } else {
+                    updateStatus('sessionValidation', `❌ Session validation failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('sessionValidation', `❌ Session validation error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAllAuth() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            sessionStorage.removeItem('userSession');
+            document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+            updateStatus('authStatus', '🗑️ All authentication data cleared', 'warning');
+        }
+
+        function startRefreshTest() {
+            let testCount = 0;
+            updateStatus('refreshTest', '⏳ Starting refresh test...', 'warning');
+            
+            refreshInterval = setInterval(async () => {
+                testCount++;
+                const isAuth = TestAuthManager.isAuthenticated();
+                
+                if (isAuth) {
+                    try {
+                        await testSessionValidation();
+                        updateStatus('refreshTest', 
+                            `✅ Test ${testCount}: Session persists after refresh simulation`, 
+                            'success'
+                        );
+                    } catch (error) {
+                        updateStatus('refreshTest', 
+                            `❌ Test ${testCount}: Session validation failed: ${error.message}`, 
+                            'error'
+                        );
+                    }
+                } else {
+                    updateStatus('refreshTest', 
+                        `❌ Test ${testCount}: Authentication lost`, 
+                        'error'
+                    );
+                    stopRefreshTest();
+                }
+            }, 2000);
+        }
+
+        function stopRefreshTest() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+                updateStatus('refreshTest', '⏹️ Refresh test stopped', 'warning');
+            }
+        }
+
+        // Initialize
+        checkAuthStatus();
+        analyzeStorage();
+        analyzeCookies();
+    </script>
+</body>
+</html>

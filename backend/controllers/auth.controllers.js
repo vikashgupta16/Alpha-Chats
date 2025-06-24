@@ -28,8 +28,7 @@ export const signUp = async (req,res) => {
             httpOnly:true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? "None" : "Lax",
-            maxAge:7*24*60*60*1000,
-            // Remove explicit domain for localhost - let browser handle it
+            maxAge:7*24*60*60*1000, // 7 days
             path: '/'
         })
 
@@ -61,8 +60,7 @@ export const login = async (req,res) => {
             httpOnly:true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? "None" : "Lax",
-            maxAge:7*24*60*60*1000,
-            // Remove explicit domain for localhost - let browser handle it
+            maxAge:7*24*60*60*1000, // 7 days
             path: '/'
         })
 
@@ -82,7 +80,6 @@ export const logout = async (req,res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? "None" : "Lax",
-            // Remove explicit domain for localhost - let browser handle it
             path: '/'
         })
         return res.status(200).json({message:"Logged out successfully"})

@@ -6,7 +6,7 @@ import { setUserData } from '../redux/userSlice';
 import { useDispatch } from 'react-redux';
 import { FaUserPlus, FaCode } from 'react-icons/fa';
 import { useTheme } from '../components/ThemeContext';
-import TokenManager from '../utils/tokenManager';
+import { AuthManager } from '../utils/auth';
 
 function SignUp() {
       const { theme } = useTheme();
@@ -54,14 +54,11 @@ function SignUp() {
           let result = await axios.post(`${serverUrl}/api/auth/signup`, {
             userName: userName.trim(),
             github: github.trim(),
-            password
-          }, { withCredentials: true })
+            password          }, { withCredentials: true })
           
-          // Store token in localStorage for browsers with cookie issues
-          if (result.data.token) {
-            TokenManager.setToken(result.data.token);
-            console.log('✅ [SignUp] Token stored in localStorage for fallback');
-          }
+          // Use AuthManager to properly store authentication data
+          AuthManager.setAuth(result.data, result.data.token);
+          console.log('✅ [SignUp] Authentication data stored successfully');
           
           dispatch(setUserData(result.data))
           navigate("/profile")
@@ -130,25 +127,26 @@ function SignUp() {
                   className="w-full p-3 rounded border bg-pastel-cream dark:bg-[#232526] border-pastel-rose dark:border-[#ff512f] text-pastel-plum dark:text-[#ffe53b] placeholder-pastel-muted dark:placeholder-[#ff512f]/60 focus:outline-none focus:ring-2 focus:ring-pastel-rose dark:focus:ring-[#ff512f] transition pr-16 font-mono shadow-sm"
                   onChange={(e) => setPassword(e.target.value)}
                   value={password}
-                />                <button 
-                  type="button" 
-                  className="absolute right-3 text-pastel-rose dark:text-[#ff512f] font-semibold text-sm hover:text-pastel-coral dark:hover:underline focus:outline-none font-mono" 
-                  onClick={() => setShow(s => !s)}
-                >
-                  {show ? "Hide" : "Show"}
-                </button>
-              </div>
-              <button 
+                />              <button 
+                type="button" 
+                className="absolute right-3 text-pastel-rose dark:text-[#ff512f] font-semibold text-sm hover:text-pastel-coral dark:hover:underline focus:outline-none font-mono min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation" 
+                onClick={() => setShow(s => !s)}
+                aria-label={show ? "Hide password" : "Show password"}
+              >
+                {show ? "Hide" : "Show"}
+              </button>
+              </div>              <button 
                 type="submit"
                 disabled={loading}
-                className="mt-2 bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#ff512f] dark:to-[#dd2476] text-white dark:text-[#ffe53b] hover:from-pastel-coral hover:to-pastel-sunny dark:hover:from-[#ffe53b] dark:hover:to-[#ff512f] font-bold py-3 rounded-lg shadow-md transition disabled:opacity-70 font-mono transform hover:scale-105"
+                className="mt-2 bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#ff512f] dark:to-[#dd2476] text-white dark:text-[#ffe53b] hover:from-pastel-coral hover:to-pastel-sunny dark:hover:from-[#ffe53b] dark:hover:to-[#ff512f] font-bold py-3 px-6 rounded-lg shadow-md transition disabled:opacity-70 font-mono transform hover:scale-105 min-h-[48px] touch-manipulation active:scale-95"
+                aria-label={loading ? "Creating account..." : "Create account"}
               >
                 {loading ? "Loading..." : "Sign Up"}
               </button>
             </form>
-            <div className='w-full flex justify-center items-center pb-4'>              <span className="text-pastel-purple dark:text-[#ffe53b] font-mono">Already have an account?</span>
-              <button onClick={() => navigate("/login")}
-                className="ml-2 text-pastel-rose dark:text-[#ff512f] font-semibold hover:text-pastel-coral dark:hover:underline focus:outline-none bg-transparent border-none p-0 cursor-pointer font-mono">
+            <div className='w-full flex justify-center items-center pb-4'>              <span className="text-pastel-purple dark:text-[#ffe53b] font-mono">Already have an account?</span>              <button onClick={() => navigate("/login")}
+                className="ml-2 text-pastel-rose dark:text-[#ff512f] font-semibold hover:text-pastel-coral dark:hover:underline focus:outline-none bg-transparent border-none p-2 cursor-pointer font-mono min-h-[44px] touch-manipulation active:scale-95"
+                aria-label="Go to login page">
                 Login
               </button>
             </div>

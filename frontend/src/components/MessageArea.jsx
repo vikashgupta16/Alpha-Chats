@@ -4,6 +4,7 @@ import { FiMonitor, FiTerminal, FiCode, FiChevronDown } from "react-icons/fi";
 import dp from '../assets/pp.webp'
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedUser, setMessages, addMessage, markMessagesAsRead } from '../redux/userSlice';
+import { markMessagesAsReadAPI, messageUtils } from '../utils/messageUtils';
 import axios from 'axios';
 import { serverUrl } from '../config/constants';
 import LoadingSpinner from './LoadingSpinner';
@@ -22,6 +23,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
   const [fetchingMessages, setFetchingMessages] = useState(false)
   const [inputMode, setInputMode] = useState('text'); // 'text', 'code', 'terminal'
   const [codeLang, setCodeLang] = useState('javascript');
+  const [showTemplates, setShowTemplates] = useState(false);
     // Mobile detection with optimization
   const [isMobile, setIsMobile] = useState(() => isMobileDevice() || window.innerWidth < 640);
   const [inputFocused, setInputFocused] = useState(false);
@@ -60,7 +62,6 @@ function MessageArea({ socketData, messageHandlerRef }) {
       optimizeForMobile();
     }
   }, [isMobile]);
-
   // Handle input focus for mobile keyboard behavior
   useEffect(() => {
     if (isMobile && inputFocused && inputRef.current) {
@@ -71,6 +72,14 @@ function MessageArea({ socketData, messageHandlerRef }) {
           block: 'center',
           inline: 'nearest'
         });
+        
+        // Scroll to bottom to ensure the last message is visible
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'end'
+          });
+        }
       }, 300);
     }
   }, [inputFocused, isMobile]);
@@ -327,9 +336,8 @@ function MessageArea({ socketData, messageHandlerRef }) {
       }, 200);
     }
   }, [selectedUser?._id]);
-
   // Scroll to bottom function for the button
-  const scrollToBottom = () => {
+  const scrollToBottom = async () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ 
         behavior: "smooth",
@@ -341,7 +349,14 @@ function MessageArea({ socketData, messageHandlerRef }) {
     
     // Mark messages as read when manually scrolling to bottom
     if (unreadMessageCount > 0) {
-      dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+      try {
+        await markMessagesAsReadAPI(selectedUser._id);
+        dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+      } catch (error) {
+        console.error('Failed to mark messages as read on scroll:', error);
+        // Still update local state even if API fails
+        dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+      }
     }
   };
     // Fetch messages when selectedUser changes
@@ -350,33 +365,43 @@ function MessageArea({ socketData, messageHandlerRef }) {
       console.log('👤 Selected user changed, fetching messages for:', selectedUser.name);
       fetchMessages()
     }
-  }, [selectedUser?._id])
-  // Mark messages as read when opening a conversation
+  }, [selectedUser?._id])  // Mark messages as read when opening a conversation
   useEffect(() => {
-    if (selectedUser?._id && currentConversationMessages.length > 0 && !fetchingMessages && markAsRead) {
-      // Check how many unread messages we have before marking as read
-      const unreadMessages = currentConversationMessages.filter(msg => 
-        msg.sender === selectedUser._id && 
-        msg.reciver === userData?._id && 
-        !msg.read
-      );
-      
-      if (unreadMessages.length > 0) {
-        console.log(`📖 [MESSAGE AREA] Marking ${unreadMessages.length} messages as read for user:`, selectedUser._id);
+    const markAsReadAsync = async () => {
+      if (selectedUser?._id && currentConversationMessages.length > 0 && !fetchingMessages && markAsRead) {
+        // Check how many unread messages we have before marking as read
+        const unreadMessages = currentConversationMessages.filter(msg => 
+          msg.sender === selectedUser._id && 
+          msg.reciver === userData?._id && 
+          !msg.read
+        );
         
-        // Mark messages as read via socket (for real-time updates)
-        if (markAsRead) {
-          markAsRead(selectedUser._id);
+        if (unreadMessages.length > 0) {
+          console.log(`📖 [MESSAGE AREA] Marking ${unreadMessages.length} messages as read for user:`, selectedUser._id);
+          
+          // Mark messages as read via API (for persistent database update)
+          try {
+            await markMessagesAsReadAPI(selectedUser._id);
+          } catch (error) {
+            console.error('Failed to mark messages as read on server:', error);
+          }
+          
+          // Mark messages as read via socket (for real-time updates)
+          if (markAsRead) {
+            markAsRead(selectedUser._id);
+          }
+          
+          // Also mark messages as read in local state immediately (for instant UI update)
+          dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+          
+          console.log(`✅ [MESSAGE AREA] Messages marked as read for user:`, selectedUser._id);
+        } else {
+          console.log(`ℹ️ [MESSAGE AREA] No unread messages to mark for user:`, selectedUser._id);
         }
-        
-        // Also mark messages as read in local state immediately (for instant UI update)
-        dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
-        
-        console.log(`✅ [MESSAGE AREA] Messages marked as read for user:`, selectedUser._id);
-      } else {
-        console.log(`ℹ️ [MESSAGE AREA] No unread messages to mark for user:`, selectedUser._id);
       }
-    }
+    };
+    
+    markAsReadAsync();
   }, [selectedUser?._id, currentConversationMessages, fetchingMessages, markAsRead, dispatch]) // Added currentConversationMessages to trigger on any message change
   
   // Typing indicator timer
@@ -459,8 +484,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
       // Simply add the HTTP response message (sender's copy)
       dispatch(addMessage(result.data));
       console.log('✅ Added HTTP message to state');
-      
-      // Send via socket for real-time delivery to other clients
+        // Send via socket for real-time delivery to other clients
       // CRITICAL: Pass database ID to socket for proper tracking
       const socketPayloadWithDbId = {
         ...socketPayload,
@@ -469,6 +493,14 @@ function MessageArea({ socketData, messageHandlerRef }) {
       const messageId = sendSocketMessage(socketPayloadWithDbId);
       
       setMessage("");
+      
+      // Auto-scroll to bottom after sending message
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+      
       console.log('✅ [SENT] Message via HTTP+Socket:', {
         httpId: result.data._id,
         socketId: messageId
@@ -626,12 +658,11 @@ function MessageArea({ socketData, messageHandlerRef }) {
                   {onlineUsers?.includes(selectedUser?._id) ? 'Now' : formatLastSeen(selectedUser?.lastSeen)}
                 </span>
               </div>
-            </div>
-              {/* Messages Area */}
+            </div>              {/* Messages Area */}
             <div 
               ref={messagesContainerRef}
               className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4 relative`} 
-              style={{paddingBottom: isMobile ? (inputFocused ? '20px' : '120px') : '180px'}}
+              style={{paddingBottom: isMobile ? (inputFocused ? '160px' : '200px') : '180px'}}
             >
               {fetchingMessages ? (
                 <div className='flex items-center justify-center h-full'>
@@ -782,10 +813,9 @@ function MessageArea({ socketData, messageHandlerRef }) {
                 {/* Mobile mode selector */}
                 {isMobile && (
                   <div className="bg-gradient-to-r from-pastel-lavender to-pastel-peach dark:from-[#23234a] dark:to-[#181c2f] px-3 py-2 border-b border-pastel-rose dark:border-[#39ff14]/20">
-                    <div className="flex gap-2 justify-center">
-                      <button
+                    <div className="flex gap-2 justify-center">                      <button
                         type="button"
-                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none ${inputMode === 'text' 
+                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none min-h-[44px] touch-manipulation active:scale-95 ${inputMode === 'text' 
                             ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/30'
                             : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-purple dark:text-[#b3b3ff] border border-pastel-rose dark:border-[#39ff14]/30 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 hover:border-pastel-coral dark:hover:border-[#39ff14]/50'
                         }`}
@@ -795,12 +825,12 @@ function MessageArea({ socketData, messageHandlerRef }) {
                           setInputMode('text');
                         }}
                         onMouseDown={(e) => e.preventDefault()}
+                        aria-label="Switch to text mode"
                       >
                         💬
-                      </button>
-                      <button
+                      </button><button
                         type="button"
-                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none ${inputMode === 'code' 
+                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none min-h-[44px] touch-manipulation active:scale-95 ${inputMode === 'code' 
                             ? 'bg-gradient-to-r from-pastel-mint to-pastel-sage dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-mint/30 dark:shadow-[#39ff14]/30'
                             : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-purple dark:text-[#b3b3ff] border border-pastel-mint dark:border-[#39ff14]/30 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 hover:border-pastel-sage dark:hover:border-[#39ff14]/50'
                         }`}
@@ -810,12 +840,12 @@ function MessageArea({ socketData, messageHandlerRef }) {
                           setInputMode('code');
                         }}
                         onMouseDown={(e) => e.preventDefault()}
+                        aria-label="Switch to code mode"
                       >
                         💻
-                      </button>
-                      <button
+                      </button>                      <button
                         type="button"
-                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none ${inputMode === 'terminal' 
+                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none min-h-[44px] touch-manipulation active:scale-95 ${inputMode === 'terminal' 
                             ? 'bg-gradient-to-r from-pastel-sunny to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-sunny/30 dark:shadow-[#39ff14]/30'
                             : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-purple dark:text-[#b3b3ff] border border-pastel-sunny dark:border-[#39ff14]/30 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 hover:border-pastel-coral dark:hover:border-[#39ff14]/50'
                         }`}
@@ -825,9 +855,28 @@ function MessageArea({ socketData, messageHandlerRef }) {
                           setInputMode('terminal');
                         }}
                         onMouseDown={(e) => e.preventDefault()}
+                        aria-label="Switch to terminal mode"
                       >
                         ⚡
                       </button>
+                      {(inputMode === 'code' || inputMode === 'terminal') && (
+                        <button
+                          type="button"
+                          className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none min-h-[44px] touch-manipulation active:scale-95 ${showTemplates 
+                              ? 'bg-gradient-to-r from-pastel-purple to-pastel-plum dark:from-[#6a5acd] dark:to-[#483d8b] text-white shadow-lg shadow-pastel-purple/30'
+                              : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-purple dark:text-[#b3b3ff] border border-pastel-purple dark:border-[#6a5acd]/30 hover:bg-pastel-peach dark:hover:bg-[#6a5acd]/10 hover:border-pastel-plum dark:hover:border-[#6a5acd]/50'
+                          }`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowTemplates(!showTemplates);
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          aria-label="Toggle templates"
+                        >
+                          📋
+                        </button>
+                      )}
                       {inputMode === 'code' && (
                         <select
                           className="ml-2 px-2 py-1.5 rounded font-mono text-xs bg-pastel-lavender dark:bg-[#23234a] text-pastel-plum dark:text-[#39ff14] border border-pastel-rose dark:border-[#39ff14]/30 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 transition-colors duration-200"
@@ -844,6 +893,60 @@ function MessageArea({ socketData, messageHandlerRef }) {
                           ))}
                         </select>
                       )}
+                    </div>
+                  </div>                )}
+                
+                {/* Code Templates - Show when code mode is active */}
+                {inputMode === 'code' && showTemplates && (
+                  <div className="border-t border-pastel-rose dark:border-[#39ff14]/20 bg-pastel-lavender dark:bg-[#0d1117] p-2 sm:p-3">
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <span className="text-pastel-purple dark:text-[#b3b3ff] font-mono text-xs">Quick Templates:</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {Object.entries(messageUtils.codeTemplates[codeLang] || messageUtils.codeTemplates.javascript).map(([key, template]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          className="p-2 text-left text-xs font-mono bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-[#39ff14] border border-pastel-rose dark:border-[#39ff14]/30 rounded hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 transition-colors min-h-[44px] touch-manipulation active:scale-95"
+                          onClick={() => {
+                            setMessage(template);
+                            setShowTemplates(false);
+                          }}
+                        >
+                          {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Terminal Templates - Show when terminal mode is active */}
+                {inputMode === 'terminal' && showTemplates && (
+                  <div className="border-t border-pastel-rose dark:border-[#39ff14]/20 bg-pastel-lavender dark:bg-[#0d1117] p-2 sm:p-3">
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <span className="text-pastel-purple dark:text-[#b3b3ff] font-mono text-xs">Quick Commands:</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                      {Object.entries(messageUtils.terminalTemplates).map(([category, commands]) => (
+                        <div key={category} className="mb-2">
+                          <div className="text-pastel-rose dark:text-[#39ff14] font-mono text-xs mb-1 capitalize">{category}:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {commands.slice(0, 3).map((command, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                className="px-2 py-1 text-xs font-mono bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-[#39ff14] border border-pastel-rose dark:border-[#39ff14]/30 rounded hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 transition-colors min-h-[32px] touch-manipulation active:scale-95"
+                                onClick={() => {
+                                  setMessage(command);
+                                  setShowTemplates(false);
+                                }}
+                              >
+                                {command.split(' ')[0]}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -919,10 +1022,9 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     </button>
                   </div>
                   {!isMobile && (
-                    <div className="flex gap-2 mt-2 justify-center">
-                      <button
+                    <div className="flex gap-2 mt-2 justify-center">                      <button
                         type="button"
-                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none ${inputMode === 'text' 
+                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none min-h-[44px] touch-manipulation active:scale-95 ${inputMode === 'text' 
                             ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/30'
                             : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-purple dark:text-[#b3b3ff] border border-pastel-rose dark:border-[#39ff14]/30 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 hover:border-pastel-coral dark:hover:border-[#39ff14]/50'
                         }`}
@@ -932,12 +1034,12 @@ function MessageArea({ socketData, messageHandlerRef }) {
                           setInputMode('text');
                         }}
                         onMouseDown={(e) => e.preventDefault()}
+                        aria-label="Switch to text mode"
                       >
                         💬 Text
-                      </button>
-                      <button
+                      </button>                      <button
                         type="button"
-                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none ${inputMode === 'code' 
+                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none min-h-[44px] touch-manipulation active:scale-95 ${inputMode === 'code' 
                             ? 'bg-gradient-to-r from-pastel-mint to-pastel-sage dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-mint/30 dark:shadow-[#39ff14]/30'
                             : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-purple dark:text-[#b3b3ff] border border-pastel-mint dark:border-[#39ff14]/30 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 hover:border-pastel-sage dark:hover:border-[#39ff14]/50'
                         }`}
@@ -947,12 +1049,12 @@ function MessageArea({ socketData, messageHandlerRef }) {
                           setInputMode('code');
                         }}
                         onMouseDown={(e) => e.preventDefault()}
+                        aria-label="Switch to code mode"
                       >
                         💻 Code
-                      </button>
-                      <button
+                      </button>                      <button
                         type="button"
-                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none ${inputMode === 'terminal' 
+                        className={`px-3 py-1.5 rounded font-mono text-xs transition-all duration-200 hover:scale-105 cursor-pointer select-none min-h-[44px] touch-manipulation active:scale-95 ${inputMode === 'terminal' 
                             ? 'bg-gradient-to-r from-pastel-sunny to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-sunny/30 dark:shadow-[#39ff14]/30'
                             : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-purple dark:text-[#b3b3ff] border border-pastel-sunny dark:border-[#39ff14]/30 hover:bg-pastel-peach dark:hover:bg-[#39ff14]/10 hover:border-pastel-coral dark:hover:border-[#39ff14]/50'
                         }`}
@@ -962,6 +1064,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
                           setInputMode('terminal');
                         }}
                         onMouseDown={(e) => e.preventDefault()}
+                        aria-label="Switch to terminal mode"
                       >
                         ⚡ Terminal
                       </button>

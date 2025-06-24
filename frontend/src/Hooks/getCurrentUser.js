@@ -3,29 +3,37 @@ import { useEffect } from "react"
 import { serverUrl } from "../config/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { setUserData } from "../redux/userSlice"
+import { AuthManager } from "../utils/auth"
 
 const getCurrentUser = () => {
     const dispatch = useDispatch()
     const { userData } = useSelector(state => state.user)
-    
-    useEffect(() => {
+      useEffect(() => {
         const fetchUser = async () => {
             try {
-                console.log('🔍 [getCurrentUser] Fetching current user...')
-                const result = await axios.get(`${serverUrl}/api/user/current`, {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                console.log('✅ [getCurrentUser] User fetched successfully:', result.data)
-                dispatch(setUserData(result.data))
+                // Check if we have any authentication data before making the request
+                if (!AuthManager.isAuthenticated()) {
+                    console.log('� [getCurrentUser] No authentication data found, skipping fetch');
+                    dispatch(setUserData(null));
+                    return;
+                }
+
+                console.log('🔍 [getCurrentUser] Fetching current user...');
+                const result = await AuthManager.validateSession();
+                
+                if (result) {
+                    console.log('✅ [getCurrentUser] User session validated successfully:', result);
+                    dispatch(setUserData(result));
+                } else {
+                    console.log('⚠️ [getCurrentUser] Session validation failed');
+                    dispatch(setUserData(null));
+                }
             } catch (error) {
-                console.error("❌ [getCurrentUser] Error fetching current user:", error)
-                console.error("Response status:", error.response?.status)
-                console.error("Response data:", error.response?.data)
+                console.error("❌ [getCurrentUser] Error fetching current user:", error);
+                console.error("Response status:", error.response?.status);
+                console.error("Response data:", error.response?.data);
                 // Clear user data on authentication failure
-                dispatch(setUserData(null))
+                dispatch(setUserData(null));
             }
         }
         fetchUser()

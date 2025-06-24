@@ -11,6 +11,7 @@ import { setSelectedUser, setOtherUsers, setUserData } from '../redux/userSlice'
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './ThemeContext';
 import { debounce, isMobileDevice } from '../utils/mobileOptimizations';
+import { AuthManager } from '../utils/auth';
 
 function SideBar({ onlineUsers = [], isConnected = false }) {
     let {userData,otherUsers,selectedUser,messages} = useSelector(state => state.user)
@@ -141,17 +142,17 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
             user.userName?.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [otherUsers, searchTerm]);
-    
-    const handleSearch = (e) => {
+      const handleSearch = (e) => {
         e.preventDefault()
         // Search functionality is handled by filteredUsers
     }
-      // Theme toggle button
+    
+    // Theme toggle button
     const ThemeToggle = () => (
         <button
             onClick={toggleTheme}
-            className="flex items-center gap-1 text-pastel-purple dark:text-[#b3b3ff] hover:text-pastel-plum dark:hover:text-white transition-colors p-2 rounded-lg hover:bg-pastel-peach dark:hover:bg-[#181c2f]"
-            aria-label="Toggle theme"
+            className="flex items-center gap-1 text-pastel-purple dark:text-[#b3b3ff] hover:text-pastel-plum dark:hover:text-white transition-colors p-2 rounded-lg hover:bg-pastel-peach dark:hover:bg-[#181c2f] min-h-[44px] min-w-[44px] touch-manipulation active:scale-95"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
             <span className="text-xs">{theme === 'dark' ? '🌙' : '☀️'}</span>
             <span className="text-xs hidden sm:inline">{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
@@ -161,12 +162,20 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
     const handelLogoout= async()=>{
       try {
         let result= await axios.get(`${serverUrl}/api/auth/logout`,{withCredentials:true})
+        // Clear all authentication data
+        AuthManager.clearAuth();
         dispatch(setUserData(null))
         dispatch(setOtherUsers(null))
-        navigate("/login")      } catch (error) {
+        navigate("/login")
+      } catch (error) {
         console.error("Error logging out:", error)
+        // Even if server logout fails, clear local auth data
+        AuthManager.clearAuth();
+        dispatch(setUserData(null))
+        dispatch(setOtherUsers(null))
+        navigate("/login")
       }
-    }    // Responsive: detect mobile with optimization
+    }// Responsive: detect mobile with optimization
     const [isMobile, setIsMobile] = useState(() => isMobileDevice() || window.innerWidth < 640);
     
     // Debounced resize handler for better performance
@@ -325,13 +334,23 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                         const userIsOnline = isUserOnline(user._id);
                         const unreadCount = getUserUnreadCount(user._id);
                         
-                        return (
-                            <div 
-                                key={user._id}                            className={`w-full p-3 flex items-center gap-3 rounded-xl border transition-all duration-200 cursor-pointer hover:scale-[1.02] ${
-                                    selectedUser?._id === user._id                                    ? 'bg-gradient-to-r from-pastel-lavender to-pastel-peach dark:from-[#39ff14]/20 dark:to-[#7f53ac]/20 border-pastel-rose dark:border-[#39ff14] shadow-lg shadow-pastel-rose/20 dark:shadow-[#39ff14]/20' 
+                        return (                            <div 
+                                key={user._id}
+                                className={`w-full p-3 flex items-center gap-3 rounded-xl border transition-all duration-200 cursor-pointer hover:scale-[1.02] min-h-[68px] touch-manipulation active:scale-95 ${
+                                    selectedUser?._id === user._id 
+                                        ? 'bg-gradient-to-r from-pastel-lavender to-pastel-peach dark:from-[#39ff14]/20 dark:to-[#7f53ac]/20 border-pastel-rose dark:border-[#39ff14] shadow-lg shadow-pastel-rose/20 dark:shadow-[#39ff14]/20' 
                                         : 'bg-pastel-cream dark:bg-[#23234a]/50 border-pastel-border dark:border-pastel-muted hover:bg-pastel-lavender dark:hover:bg-[#23234a] hover:border-pastel-rose dark:hover:border-[#39ff14]/50'
                                 }`}
                                 onClick={() => dispatch(setSelectedUser(user))}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        dispatch(setSelectedUser(user));
+                                    }
+                                }}
+                                aria-label={`Chat with ${user.name || user.userName}${unreadCount > 0 ? `, ${unreadCount} unread messages` : ''}`}
                             >
                                 <div className="relative">                                <img 
                                         src={user.image || dp} 
@@ -389,10 +408,10 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                         <FiSettings className="w-4 h-4" />
                         <span className="text-xs hidden sm:inline">Settings</span>
                     </button>
-                    <ThemeToggle />
-                    <button 
+                    <ThemeToggle />                    <button 
                         onClick={handelLogoout}
-                        className="flex items-center gap-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20"
+                        className="flex items-center gap-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] touch-manipulation active:scale-95"
+                        aria-label="Logout"
                     >
                         <BiLogOut className="w-4 h-4" />
                         <span className="text-xs">Logout</span>
